@@ -18,9 +18,9 @@ TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 DmxInput dmxInput;
 
 #define START_CHANNEL 1
-#define NUM_CHANNELS 3
+#define NUM_CHANNELS 8192
 
-volatile uint8_t buffer[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
+volatile uint16_t buffer[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
 
 void drawBitmapZoom(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
 {
@@ -95,11 +95,32 @@ void setup()
 	
 	
     // Setup our DMX Input to read on GPIO 0, from channel 1 to 3
-    dmxInput.begin(0, START_CHANNEL, NUM_CHANNELS);
+    dmxInput.begin(2, START_CHANNEL, NUM_CHANNELS);
 
     // Setup the onboard LED so that we can blink when we receives packets
     pinMode(LED_BUILTIN, OUTPUT);
 }
+
+// Function to reverse bits of num
+unsigned int reverseBits(unsigned int num)
+{
+    unsigned int NO_OF_BITS = sizeof(num) * 8;
+    unsigned int reverse_num = 0;
+    int i;
+    for (i = 0; i < NO_OF_BITS; i++) {
+        if ((num & (1 << i)))
+            reverse_num |= 1 << ((NO_OF_BITS - 1) - i);
+    }
+    return reverse_num;
+}
+
+
+int page1 = 0;
+int page2 = 0;
+int yy1 = 0;
+int yy2 = 0;
+
+int cnt = 0;
 
 void loop()
 {
@@ -108,10 +129,64 @@ void loop()
 
     // Print the DMX channels
     //Serial.print("Received packet: ");
-    for (uint i = 0; i < sizeof(buffer); i++)
+    for (uint i = 0; i < sizeof(buffer) /2 ; i++)  
     {
-        tft.print(buffer[i]);
-        tft.print(",");
+
+        unsigned int val = reverseBits((buffer[i] >> 2 ) & 0xff ) >> 0x18;
+        uint8_t we = (buffer[i] >> 1) & 1 ;
+        uint8_t rs = (buffer[i] >> 0) & 1 ;
+ 
+        uint8_t cs1 = (buffer[i] >> 11) & 1 ;
+        uint8_t cs2 = (buffer[i] >> 12) & 1 ;
+        char sbuf[50];
+
+        if (rs == 0) {
+            //sprintf(sbuf,"%02x:%d ", val, cs1);
+            //tft.print(sbuf);
+            if (/*(cs1 == 1) & */ ((val >> 4) == 0xb)) {
+              page1 = val & 0xf;
+              yy1 = 0;
+              sprintf(sbuf,"%02x, ", val);
+              tft.print(sbuf);
+                /*sprintf(sbuf,"cnt %d", cnt);
+                tft.print(sbuf);*/
+                cnt = 0;
+            } else
+            if ((cs2 == 188) & ((val >> 4) == 0xb)) {
+              page2 = val & 0xf;
+              yy2 = 0;
+              sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
+              tft.print(sbuf);
+            }
+            if (tft.getCursorY() >320 ) {
+                tft.fillScreen(TFT_ORANGE);
+                tft.setCursor(0,0,2);
+            }
+        } else if (rs == 1 ) {
+            if (/*cs1*/ 1 == 1) {
+              cnt++;
+              for (int i = 0; i < 8; i++ ) {
+                  if (((val >> i) & 0x1) == 1) {
+                    tft.drawPixel(240 - yy1, page1 * 8 + i, TFT_BLACK);
+                  } else {
+                    tft.drawPixel(240 - yy1, page1 * 8 + i, TFT_WHITE);
+                  }
+              }
+              yy1++;
+            } else
+            if (cs2 == 1) {
+              for (int i = 0; i < 8; i++ ) {
+                  if (((val >> i) & 0x1) == 1) {
+                    tft.drawPixel(0 + yy2, page2 * 8 + i, TFT_BLACK);
+                  } else {
+                    tft.drawPixel(0 + yy2, page2 * 8 + i, TFT_LIGHTGREY);
+                  }
+              }
+              yy2++;
+            }
+        }
+
+
         //Serial.print(buffer[i]);
         //Serial.print(", ");
     }

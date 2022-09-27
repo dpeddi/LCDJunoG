@@ -21,6 +21,8 @@ extern TFT_eSPI tft;
   #include "hardware/irq.h"
 #endif
 
+int capture_index = 0;
+
 bool prgm_loaded[] = {false,false};
 volatile uint prgm_offsets[] = {0,0};
 /*
@@ -76,13 +78,13 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
 
     // Setup the side-set pins for the PIO state machine
     // Shift to right, autopush disabled
-    sm_config_set_in_shift(&sm_conf, true, false, 8);
+    sm_config_set_in_shift(&sm_conf, true, false, 14);
     // Deeper FIFO as we're not doing any TX
     sm_config_set_fifo_join(&sm_conf, PIO_FIFO_JOIN_RX);
 
     // Setup the clock divider to run the state machine at exactly 1MHz
-    //eddi- uint clk_div = clock_get_hz(clk_sys) / DMX_SM_FREQ;
-    //eddi- sm_config_set_clkdiv(&sm_conf, clk_div);
+    uint clk_div = clock_get_hz(clk_sys) / DMX_SM_FREQ;
+    sm_config_set_clkdiv(&sm_conf, clk_div);
 
     // Load our configuration, jump to the start of the program and run the State Machine
     pio_sm_init(pio, sm, prgm_offsets[pio_ind], &sm_conf);
@@ -109,7 +111,7 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
     return SUCCESS;
 }
 
-void DmxInput::read(volatile uint8_t *buffer)
+void DmxInput::read(volatile uint16_t *buffer)
 {
     if(_buf==nullptr) {
         read_async(buffer);
@@ -121,12 +123,14 @@ void DmxInput::read(volatile uint8_t *buffer)
 }
 
 void dmxinput_dma_handler() {
-    tft.print("DMA");
     for(int i=0;i<NUM_DMA_CHANS;i++) {
         if(active_inputs[i]!=nullptr && (dma_hw->ints0 & (1u<<i))) {
             dma_hw->ints0 = 1u << i;
             volatile DmxInput *instance = active_inputs[i];
-            dma_channel_set_write_addr(i, instance->_buf, true);
+              capture_index += 1024;
+              capture_index = capture_index % 8192;
+
+            dma_channel_set_write_addr(i, instance->_buf + capture_index, true);
             pio_sm_exec(instance->_pio, instance->_sm, pio_encode_jmp(prgm_offsets[pio_get_index(instance->_pio)]));
             pio_sm_clear_fifos(instance->_pio, instance->_sm);
 #ifdef ARDUINO
@@ -142,7 +146,7 @@ void dmxinput_dma_handler() {
     }
 }
 
-void DmxInput::read_async(volatile uint8_t *buffer, void (*inputUpdatedCallback)(DmxInput*)) {
+void DmxInput::read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback)(DmxInput*)) {
 
     _buf = buffer;
     if (inputUpdatedCallback!=nullptr) {
@@ -158,7 +162,7 @@ void DmxInput::read_async(volatile uint8_t *buffer, void (*inputUpdatedCallback)
     dma_channel_config cfg = dma_channel_get_default_config(_dma_chan);
 
     // Reading from constant address, writing to incrementing byte addresses
-    channel_config_set_transfer_data_size(&cfg, DMA_SIZE_8);
+    channel_config_set_transfer_data_size(&cfg, DMA_SIZE_16);
     channel_config_set_read_increment(&cfg, false);
     channel_config_set_write_increment(&cfg, true);
 

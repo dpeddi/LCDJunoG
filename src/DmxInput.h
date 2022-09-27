@@ -20,7 +20,7 @@
 #endif
 
 #define DMX_UNIVERSE_SIZE 512
-#define DMX_SM_FREQ 1000000
+#define DMX_SM_FREQ 21000000
 
 #define DMXINPUT_BUFFER_SIZE(start_channel, num_channels) (num_channels+1)
 class DmxInput
@@ -33,7 +33,7 @@ public:
     /*
     private properties that are declared public so the interrupt handler has access
     */
-    volatile uint8_t *_buf;
+    volatile uint16_t *_buf;
     volatile PIO _pio;
     volatile uint _sm;
     volatile uint _dma_chan;
@@ -81,7 +81,7 @@ public:
         513 bytes (1 byte start code + 512 bytes frame). For ordinary
         DMX data frames, the start code should be 0x00.
     */
-    void read(volatile uint8_t *buffer);
+    void read(volatile uint16_t *buffer);
 
     /*
         Start async read process. This should only be called once.
@@ -89,7 +89,7 @@ public:
         If you want to be notified whenever a new DMX frame has been received,
         provide a callback function that will be called without arguments.
     */
-    void read_async(volatile uint8_t *buffer, void (*inputUpdatedCallback)(DmxInput* instance) = nullptr);
+    void read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback)(DmxInput* instance) = nullptr);
 
     /*
         Get the timestamp (like millis()) from the moment the latest dmx packet was received.

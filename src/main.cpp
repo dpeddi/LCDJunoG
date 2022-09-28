@@ -122,6 +122,7 @@ int yy2 = 0;
 
 int cnt = 0;
 
+int start_index = 0;
 void loop()
 {
     // Wait for next DMX packet
@@ -129,7 +130,12 @@ void loop()
 
     // Print the DMX channels
     //Serial.print("Received packet: ");
-    for (uint i = 0; i < sizeof(buffer) /2 ; i++)  
+    //for (uint i = 0; i < sizeof(buffer) /2 ; i++)  
+    uint cur_index = (uint) dmxInput.get_capture_index();  
+    if (start_index > cur_index)
+      start_index = 0;
+
+    for (uint i = start_index; i < cur_index; i++)  
     {
 //5b7 01 0110110111
 //5b4 01 0110110100
@@ -161,11 +167,11 @@ void loop()
         if (rs == 0) {
             //sprintf(sbuf,"%02x:%d ", val, cs1);
             //tft.print(sbuf);
-            if (/*(cs1 == 1) & */ ((val >> 4) == 0xb)) {
+            if ((cs1 == 1) & ((val >> 4) == 0xb)) {
               page1 = val & 0xf;
               yy1 = 0;
-              sprintf(sbuf,"%02x, ", val);
-              tft.print(sbuf);
+             // sprintf(sbuf,"%02x, ", val);
+              //tft.print(sbuf);
                 /*sprintf(sbuf,"cnt %d", cnt);
                 tft.print(sbuf);*/
                 cnt = 0;
@@ -181,13 +187,13 @@ void loop()
                 tft.setCursor(0,0,2);
             }
         } else if (rs == 1 ) {
-            if (/*cs1*/ 1 == 1) {
+            if ((cs1 == 1) && (yy1 < 120)) {  // avoid overlap the right area
               cnt++;
               for (int i = 0; i < 8; i++ ) {
                   if (((val >> i) & 0x1) == 1) {
-                    tft.drawPixel(240 - yy1, page1 * 8 + i, TFT_BLACK);
+                    tft.drawPixel(yy1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
                   } else {
-                    tft.drawPixel(240 - yy1, page1 * 8 + i, TFT_WHITE);
+                    tft.drawPixel(yy1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
                   }
               }
               yy1++;
@@ -195,9 +201,9 @@ void loop()
             if (cs2 == 1) {
               for (int i = 0; i < 8; i++ ) {
                   if (((val >> i) & 0x1) == 1) {
-                    tft.drawPixel(0 + yy2, page2 * 8 + i, TFT_BLACK);
+                    tft.drawPixel(120 + yy2, page2 * 8 + i, TFT_BLACK);
                   } else {
-                    tft.drawPixel(0 + yy2, page2 * 8 + i, TFT_LIGHTGREY);
+                    tft.drawPixel(120 + yy2, page2 * 8 + i, TFT_LIGHTGREY);
                   }
               }
               yy2++;
@@ -209,6 +215,7 @@ void loop()
         //Serial.print(", ");
     }
     //Serial.println("");
+    start_index = cur_index;
 
     // Blink the LED to indicate that a packet was received
     digitalWrite(LED_BUILTIN, HIGH);

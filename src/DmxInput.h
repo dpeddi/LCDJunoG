@@ -91,6 +91,8 @@ public:
     */
     void read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback)(DmxInput* instance) = nullptr);
 
+    int get_capture_index();
+
     /*
         Get the timestamp (like millis()) from the moment the latest dmx packet was received.
         May be used to detect if the dmx signal has stopped coming in.

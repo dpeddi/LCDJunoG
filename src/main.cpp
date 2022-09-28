@@ -131,14 +131,32 @@ void loop()
     //Serial.print("Received packet: ");
     for (uint i = 0; i < sizeof(buffer) /2 ; i++)  
     {
-
-        unsigned int val = reverseBits((buffer[i] >> 2 ) & 0xff ) >> 0x18;
-        uint8_t we = (buffer[i] >> 1) & 1 ;
-        uint8_t rs = (buffer[i] >> 0) & 1 ;
- 
-        uint8_t cs1 = (buffer[i] >> 11) & 1 ;
-        uint8_t cs2 = (buffer[i] >> 12) & 1 ;
+//5b7 01 0110110111
+//5b4 01 0110110100
+//5b5 01 0110110101
+//7b5 01 1110110101
+//7b7 01 1110110111
         char sbuf[50];
+        //sprintf(sbuf,"%08x", buffer[i]);
+        //Serial.println(sbuf);
+        //unsigned int val = reverseBits((buffer[i] >> 2 ) & 0xff ) >> 0x18;
+        //uint8_t we = (buffer[i] >> 0) & 1 ;
+        //uint8_t rs = (buffer[i] >> 1) & 1 ;
+ 
+        uint8_t val = buffer[i] & 0xff;
+        uint8_t rs = (buffer[i] >> 9) & 1 ;
+ 
+        uint8_t cs1 = (buffer[i] >> 10) & 1 ;
+        uint8_t cs2 = (buffer[i] >> 11) & 1 ;
+        
+        if ( ((val >> 4) == 0xb) && rs == 0) {
+        //sprintf(sbuf,"%08x:%02x:%d:%d ", buffer[i], val, rs, cs1);
+        //tft.print(sbuf);
+             if (tft.getCursorY() >320 ) {
+                tft.fillScreen(TFT_ORANGE);
+                tft.setCursor(0,0,2);
+            }
+        }
 
         if (rs == 0) {
             //sprintf(sbuf,"%02x:%d ", val, cs1);

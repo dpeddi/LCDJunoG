@@ -83,8 +83,9 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
     sm_config_set_fifo_join(&sm_conf, PIO_FIFO_JOIN_RX);
 
     // Setup the clock divider to run the state machine at exactly 1MHz
-    uint clk_div = clock_get_hz(clk_sys) / DMX_SM_FREQ;
-    sm_config_set_clkdiv(&sm_conf, clk_div);
+    /*uint clk_div = clock_get_hz(clk_sys) / DMX_SM_FREQ;
+    sm_config_set_clkdiv(&sm_conf, clk_div);*/
+
 
     // Load our configuration, jump to the start of the program and run the State Machine
     pio_sm_init(pio, sm, prgm_offsets[pio_ind], &sm_conf);

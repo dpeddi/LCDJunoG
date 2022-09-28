@@ -101,24 +101,10 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
 }
 
-// Function to reverse bits of num
-unsigned int reverseBits(unsigned int num)
-{
-    unsigned int NO_OF_BITS = sizeof(num) * 8;
-    unsigned int reverse_num = 0;
-    int i;
-    for (i = 0; i < NO_OF_BITS; i++) {
-        if ((num & (1 << i)))
-            reverse_num |= 1 << ((NO_OF_BITS - 1) - i);
-    }
-    return reverse_num;
-}
-
-
 int page1 = 0;
 int page2 = 0;
-int yy1 = 0;
-int yy2 = 0;
+int xx1 = 0;
+int xx2 = 0;
 
 int cnt = 0;
 
@@ -137,11 +123,6 @@ void loop()
 
     for (uint i = start_index; i < cur_index; i++)  
     {
-//5b7 01 0110110111
-//5b4 01 0110110100
-//5b5 01 0110110101
-//7b5 01 1110110101
-//7b7 01 1110110111
         char sbuf[50];
         //sprintf(sbuf,"%08x", buffer[i]);
         //Serial.println(sbuf);
@@ -169,7 +150,7 @@ void loop()
             //tft.print(sbuf);
             if ((cs1 == 1) & ((val >> 4) == 0xb)) {
               page1 = val & 0xf;
-              yy1 = 0;
+              xx1 = 0;
              // sprintf(sbuf,"%02x, ", val);
               //tft.print(sbuf);
                 /*sprintf(sbuf,"cnt %d", cnt);
@@ -178,7 +159,7 @@ void loop()
             } else
             if ((cs2 == 188) & ((val >> 4) == 0xb)) {
               page2 = val & 0xf;
-              yy2 = 0;
+              xx2 = 0;
               sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
               tft.print(sbuf);
             }
@@ -187,26 +168,26 @@ void loop()
                 tft.setCursor(0,0,2);
             }
         } else if (rs == 1 ) {
-            if ((cs1 == 1) && (yy1 < 120)) {  // avoid overlap the right area
+            if ((cs1 == 1) && (xx1 < 120)) {  // avoid overlap the right area
               cnt++;
               for (int i = 0; i < 8; i++ ) {
                   if (((val >> i) & 0x1) == 1) {
-                    tft.drawPixel(yy1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
+                    tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
                   } else {
-                    tft.drawPixel(yy1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
+                    tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
                   }
               }
-              yy1++;
+              xx1++;
             } else
             if (cs2 == 1) {
               for (int i = 0; i < 8; i++ ) {
                   if (((val >> i) & 0x1) == 1) {
-                    tft.drawPixel(120 + yy2, page2 * 8 + i, TFT_BLACK);
+                    tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
                   } else {
-                    tft.drawPixel(120 + yy2, page2 * 8 + i, TFT_LIGHTGREY);
+                    tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_LIGHTGREY);
                   }
               }
-              yy2++;
+              xx2++;
             }
         }
 

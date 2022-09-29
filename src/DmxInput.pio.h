@@ -8,14 +8,14 @@
 #include "hardware/pio.h"
 #endif
 
-// -------- //
-// DmxInput //
-// -------- //
+// ------------ //
+// DmxInput_cs1 //
+// ------------ //
 
-#define DmxInput_wrap_target 0
-#define DmxInput_wrap 8
+#define DmxInput_cs1_wrap_target 0
+#define DmxInput_cs1_wrap 8
 
-static const uint16_t DmxInput_program_instructions[] = {
+static const uint16_t DmxInput_cs1_program_instructions[] = {
             //     .wrap_target
     0x202a, //  0: wait   0 pin, 10                  
     0x20aa, //  1: wait   1 pin, 10                  
@@ -30,15 +30,50 @@ static const uint16_t DmxInput_program_instructions[] = {
 };
 
 #if !PICO_NO_HARDWARE
-static const struct pio_program DmxInput_program = {
-    .instructions = DmxInput_program_instructions,
+static const struct pio_program DmxInput_cs1_program = {
+    .instructions = DmxInput_cs1_program_instructions,
     .length = 9,
     .origin = -1,
 };
 
-static inline pio_sm_config DmxInput_program_get_default_config(uint offset) {
+static inline pio_sm_config DmxInput_cs1_program_get_default_config(uint offset) {
     pio_sm_config c = pio_get_default_sm_config();
-    sm_config_set_wrap(&c, offset + DmxInput_wrap_target, offset + DmxInput_wrap);
+    sm_config_set_wrap(&c, offset + DmxInput_cs1_wrap_target, offset + DmxInput_cs1_wrap);
+    return c;
+}
+#endif
+
+// ------------ //
+// DmxInput_cs2 //
+// ------------ //
+
+#define DmxInput_cs2_wrap_target 0
+#define DmxInput_cs2_wrap 8
+
+static const uint16_t DmxInput_cs2_program_instructions[] = {
+            //     .wrap_target
+    0x202a, //  0: wait   0 pin, 10                  
+    0x20aa, //  1: wait   1 pin, 10                  
+    0x400a, //  2: in     pins, 10                   
+    0xe020, //  3: set    x, 0                       
+    0x4021, //  4: in     x, 1                       
+    0xe021, //  5: set    x, 1                       
+    0x4021, //  6: in     x, 1                       
+    0x4074, //  7: in     null, 20                   
+    0x8020, //  8: push   block                      
+            //     .wrap
+};
+
+#if !PICO_NO_HARDWARE
+static const struct pio_program DmxInput_cs2_program = {
+    .instructions = DmxInput_cs2_program_instructions,
+    .length = 9,
+    .origin = -1,
+};
+
+static inline pio_sm_config DmxInput_cs2_program_get_default_config(uint offset) {
+    pio_sm_config c = pio_get_default_sm_config();
+    sm_config_set_wrap(&c, offset + DmxInput_cs2_wrap_target, offset + DmxInput_cs2_wrap);
     return c;
 }
 #endif

@@ -21,8 +21,6 @@ extern TFT_eSPI tft;
   #include "hardware/irq.h"
 #endif
 
-int capture_index = 0;
-
 bool prgm_loaded[] = {false,false};
 volatile uint prgm_offsets[] = {0,0};
 /*
@@ -32,7 +30,7 @@ The interrupt handler has only the ints0 register to go on, so this array needs 
 #define NUM_DMA_CHANS 12
 volatile DmxInput *active_inputs[NUM_DMA_CHANS] = {nullptr};
 
-DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_channels, PIO pio)
+DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_channels, PIO pio, uint cs)
 {
     uint pio_ind = pio_get_index(pio);
     if(!prgm_loaded[pio_ind]) {
@@ -40,11 +38,20 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
         Attempt to load the DMX PIO assembly program into the PIO program memory
         */
 
-        if (!pio_can_add_program(pio, &DmxInput_program))
-        {
-            return ERR_INSUFFICIENT_PRGM_MEM;
+        if (cs == 1) {
+            if (!pio_can_add_program(pio, &DmxInput_cs1_program))
+            {
+                return ERR_INSUFFICIENT_PRGM_MEM;
+            }
+            prgm_offsets[pio_ind] = pio_add_program(pio, &DmxInput_cs1_program);
+
+        } else if (cs == 2) {
+            if (!pio_can_add_program(pio, &DmxInput_cs2_program))
+            {
+                return ERR_INSUFFICIENT_PRGM_MEM;
+            }
+            prgm_offsets[pio_ind] = pio_add_program(pio, &DmxInput_cs2_program);
         }
-        prgm_offsets[pio_ind] = pio_add_program(pio, &DmxInput_program);
         prgm_loaded[pio_ind] = true;
     }
 
@@ -72,7 +79,11 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
     //eddi- gpio_pull_up(pin);
 
     // Generate the default PIO state machine config provided by pioasm
-    pio_sm_config sm_conf = DmxInput_program_get_default_config(prgm_offsets[pio_ind]);
+    pio_sm_config sm_conf;
+    if (cs == 1) 
+        sm_conf = DmxInput_cs1_program_get_default_config(prgm_offsets[pio_ind]);
+    else if (cs == 2) 
+        sm_conf = DmxInput_cs2_program_get_default_config(prgm_offsets[pio_ind]);
     sm_config_set_in_pins(&sm_conf, pin); // for WAIT, IN
     sm_config_set_jmp_pin(&sm_conf, pin); // for JMP
 
@@ -95,11 +106,13 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
 
     _pio = pio;
     _sm = sm;
+    _sm = cs;
     _pin = pin;
     _start_channel = start_channel;
     _num_channels = num_channels;
     _buf = nullptr;
     _cb = nullptr;
+    _capture_index = 0;
 
     _dma_chan = dma_claim_unused_channel(true);
 
@@ -124,7 +137,7 @@ void DmxInput::read(volatile uint16_t *buffer)
 }
 
 int DmxInput::get_capture_index() {
-    return capture_index;
+    return _capture_index;
 }
 
 void dmxinput_dma_handler() {
@@ -133,13 +146,13 @@ void dmxinput_dma_handler() {
             dma_hw->ints0 = 1u << i;
             volatile DmxInput *instance = active_inputs[i];
 
-            capture_index = capture_index % 8192;
+            instance->_capture_index = instance->_capture_index % 8192;
 
-            dma_channel_set_write_addr(i, instance->_buf + capture_index, true);
+            dma_channel_set_write_addr(i, instance->_buf + instance->_capture_index, true);
             pio_sm_exec(instance->_pio, instance->_sm, pio_encode_jmp(prgm_offsets[pio_get_index(instance->_pio)]));
             pio_sm_clear_fifos(instance->_pio, instance->_sm);
 
-            capture_index += 1024;
+            instance->_capture_index += 1024;
 
 #ifdef ARDUINO
             instance->_last_packet_timestamp = millis();
@@ -215,6 +228,7 @@ uint DmxInput::pin() {
 
 void DmxInput::end()
 {
+
     // Stop the PIO state machine
     pio_sm_set_enabled(_pio, _sm, false);
 
@@ -232,7 +246,11 @@ void DmxInput::end()
     }
     if(!inuse) {
         prgm_loaded[pio_id] = false;
-        pio_remove_program(_pio, &DmxInput_program, prgm_offsets[pio_id]);
+        if (_cs == 1)
+            pio_remove_program(_pio, &DmxInput_cs1_program, prgm_offsets[pio_id]);
+        else if (_cs == 2)
+            pio_remove_program(_pio, &DmxInput_cs2_program, prgm_offsets[pio_id]);
+
         prgm_offsets[pio_id]=0;
     }
 

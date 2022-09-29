@@ -37,6 +37,9 @@ public:
     volatile PIO _pio;
     volatile uint _sm;
     volatile uint _dma_chan;
+    volatile uint _cs;
+    volatile uint _capture_index;
+
     volatile unsigned long _last_packet_timestamp=0;
     void (*_cb)(DmxInput*);
     /*
@@ -69,7 +72,7 @@ public:
        run 3 more on pio1  
     */
 
-    return_code begin(uint pin, uint start_channel, uint num_channels, PIO pio = pio0);
+    return_code begin(uint pin, uint start_channel, uint num_channels, PIO pio = pio0, uint cs = 1);
 
     /*
         Read the selected channels from .begin(...) into a buffer.

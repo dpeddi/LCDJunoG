@@ -15,12 +15,13 @@
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
 #include "DmxInput.h"
-DmxInput dmxInput;
+DmxInput dmxInput[2];
 
 #define START_CHANNEL 1
 #define NUM_CHANNELS 8192
 
-volatile uint16_t buffer[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
+volatile uint16_t buffer_cs1[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
+volatile uint16_t buffer_cs2[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
 
 void drawBitmapZoom(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
 {
@@ -95,7 +96,10 @@ void setup()
 	
 	
     // Setup our DMX Input to read on GPIO 0, from channel 1 to 3
-    dmxInput.begin(2, START_CHANNEL, NUM_CHANNELS);
+    dmxInput[0].begin(2, START_CHANNEL, NUM_CHANNELS, pio0, 1);
+    dmxInput[1].begin(2, START_CHANNEL, NUM_CHANNELS, pio0, 2);
+    dmxInput[0].read_async(buffer_cs1);
+    dmxInput[1].read_async(buffer_cs2);
 
     // Setup the onboard LED so that we can blink when we receives packets
     pinMode(LED_BUILTIN, OUTPUT);
@@ -111,39 +115,47 @@ int cnt = 0;
 int start_index = 0;
 void loop()
 {
+
+    //delay(30);
+
+    if(millis() > 100 + dmxInput[0].latest_packet_timestamp()) {
+        Serial.println("no data!");
+        return;
+    }
+
+    if(millis() > 100 + dmxInput[1].latest_packet_timestamp()) {
+        Serial.println("no data!");
+        return;
+    }
+
     // Wait for next DMX packet
-    dmxInput.read(buffer);
+    //dmxInput[0].read(buffer);
 
     // Print the DMX channels
     //Serial.print("Received packet: ");
     //for (uint i = 0; i < sizeof(buffer) /2 ; i++)  
-    uint cur_index = (uint) dmxInput.get_capture_index();  
+    uint cur_index = (uint) dmxInput[0].get_capture_index();  
     if (start_index > cur_index)
       start_index = 0;
 
     for (uint i = start_index; i < cur_index; i++)  
     {
         char sbuf[50];
-        //sprintf(sbuf,"%08x", buffer[i]);
-        //Serial.println(sbuf);
-        //unsigned int val = reverseBits((buffer[i] >> 2 ) & 0xff ) >> 0x18;
-        //uint8_t we = (buffer[i] >> 0) & 1 ;
-        //uint8_t rs = (buffer[i] >> 1) & 1 ;
+
+        uint8_t val = buffer_cs1[i] & 0xff;
+        uint8_t rs = (buffer_cs1[i] >> 9) & 1 ;
  
-        uint8_t val = buffer[i] & 0xff;
-        uint8_t rs = (buffer[i] >> 9) & 1 ;
- 
-        uint8_t cs1 = (buffer[i] >> 10) & 1 ;
-        uint8_t cs2 = (buffer[i] >> 11) & 1 ;
+        uint8_t cs1 = (buffer_cs1[i] >> 10) & 1 ;
+        uint8_t cs2 = (buffer_cs1[i] >> 11) & 1 ;
         
-        if ( ((val >> 4) == 0xb) && rs == 0) {
-        //sprintf(sbuf,"%08x:%02x:%d:%d ", buffer[i], val, rs, cs1);
-        //tft.print(sbuf);
+        /*if ( ((val >> 4) == 0xb) && rs == 0) {
+        sprintf(sbuf,"%08x:%02x:%d:%d ", buffer_cs1[i], val, rs, cs1);
+        tft.print(sbuf);
              if (tft.getCursorY() >320 ) {
                 tft.fillScreen(TFT_ORANGE);
                 tft.setCursor(0,0,2);
             }
-        }
+        } */
 
         if (rs == 0) {
             //sprintf(sbuf,"%02x:%d ", val, cs1);
@@ -157,11 +169,11 @@ void loop()
                 tft.print(sbuf);*/
                 cnt = 0;
             } else
-            if ((cs2 == 188) & ((val >> 4) == 0xb)) {
+            if ((cs2 == 2) & ((val >> 4) == 0xb)) {
               page2 = val & 0xf;
               xx2 = 0;
-              sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
-              tft.print(sbuf);
+              /*sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
+              tft.print(sbuf);*/
             }
             if (tft.getCursorY() >320 ) {
                 tft.fillScreen(TFT_ORANGE);
@@ -179,7 +191,7 @@ void loop()
               }
               xx1++;
             } else
-            if (cs2 == 1) {
+            if (cs2 == 1 && (xx2 < 120)) {  // avoid overlap the right area
               for (int i = 0; i < 8; i++ ) {
                   if (((val >> i) & 0x1) == 1) {
                     tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
@@ -192,7 +204,7 @@ void loop()
         }
 
 
-        //Serial.print(buffer[i]);
+        //Serial.print(buffer_cs1[i]);
         //Serial.print(", ");
     }
     //Serial.println("");

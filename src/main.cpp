@@ -89,7 +89,7 @@ void setup()
 	
 	drawPinout(500);
 	
-	tft.fillScreen(TFT_ORANGE);
+	tft.fillScreen(TFT_BLACK);
 	tft.setCursor(0, 0, 2);
 	tft.setTextSize(1);
 	tft.print("DMX:");
@@ -176,7 +176,7 @@ void loop()
                     if (((val >> i) & 0x1) == 1) {
                       tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
                     } else {
-                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
+                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_ORANGE);
                     }
                 }
                 xx1++;
@@ -256,7 +256,7 @@ void loop()
                     if (((val >> i) & 0x1) == 1) {
                       tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
                     } else {
-                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
+                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_ORANGE);
                     }
                 }
                 xx1++;
@@ -266,7 +266,7 @@ void loop()
                     if (((val >> i) & 0x1) == 1) {
                       tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
                     } else {
-                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_WHITE);
+                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_ORANGE);
                     }
                 }
                 xx2++;

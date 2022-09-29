@@ -264,7 +264,7 @@ void loop()
               if (cs2 == 1 && (xx2 < 120)) {  // avoid overlap the right area
                 for (int i = 0; i < 8; i++ ) {
                     if (((val >> i) & 0x1) == 1) {
-                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_RED);
+                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
                     } else {
                       tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_WHITE);
                     }

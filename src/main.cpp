@@ -97,9 +97,9 @@ void setup()
 	
     // Setup our DMX Input to read on GPIO 0, from channel 1 to 3
     dmxInput[0].begin(2, START_CHANNEL, NUM_CHANNELS, pio0, 1);
-    //dmxInput[1].begin(2, START_CHANNEL, NUM_CHANNELS, pio1, 2);
+    dmxInput[1].begin(2, START_CHANNEL, NUM_CHANNELS, pio1, 2);
     dmxInput[0].read_async(buffer_cs1);
-    //dmxInput[1].read_async(buffer_cs2);
+    dmxInput[1].read_async(buffer_cs2);
 
     // Setup the onboard LED so that we can blink when we receives packets
     pinMode(LED_BUILTIN, OUTPUT);
@@ -266,7 +266,7 @@ void loop()
                     if (((val >> i) & 0x1) == 1) {
                       tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_RED);
                     } else {
-                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_LIGHTGREY);
+                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_WHITE);
                     }
                 }
                 xx2++;

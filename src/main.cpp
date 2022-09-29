@@ -97,9 +97,9 @@ void setup()
 	
     // Setup our DMX Input to read on GPIO 0, from channel 1 to 3
     dmxInput[0].begin(2, START_CHANNEL, NUM_CHANNELS, pio0, 1);
-    dmxInput[1].begin(2, START_CHANNEL, NUM_CHANNELS, pio0, 2);
+    //dmxInput[1].begin(2, START_CHANNEL, NUM_CHANNELS, pio1, 2);
     dmxInput[0].read_async(buffer_cs1);
-    dmxInput[1].read_async(buffer_cs2);
+    //dmxInput[1].read_async(buffer_cs2);
 
     // Setup the onboard LED so that we can blink when we receives packets
     pinMode(LED_BUILTIN, OUTPUT);
@@ -112,7 +112,8 @@ int xx2 = 0;
 
 int cnt = 0;
 
-int start_index = 0;
+int start_index_cs1 = 0;
+int start_index_cs2 = 0;
 void loop()
 {
 
@@ -120,12 +121,163 @@ void loop()
 
     if(millis() > 100 + dmxInput[0].latest_packet_timestamp()) {
         Serial.println("no data!");
-        return;
+        //return;
+    } else {
+      uint cur_index_cs1 = (uint) dmxInput[0].get_capture_index();  
+      if (start_index_cs1 > cur_index_cs1)
+        start_index_cs1 = 0;
+
+
+      for (uint i = start_index_cs1; i < cur_index_cs1; i++)  
+      {
+          char sbuf[50];
+
+          uint8_t val = buffer_cs1[i] & 0xff;
+          uint8_t rs = (buffer_cs1[i] >> 9) & 1 ;
+  
+          uint8_t cs1 = 1;// (buffer_cs1[i] >> 10) & 1 ;
+          uint8_t cs2 = 1;// (buffer_cs1[i] >> 11) & 1 ;
+          
+          /*if ( ((val >> 4) == 0xb) && rs == 0) {
+          sprintf(sbuf,"%08x:%02x:%d:%d ", buffer_cs1[i], val, rs, cs1);
+          tft.print(sbuf);
+              if (tft.getCursorY() >320 ) {
+                  tft.fillScreen(TFT_ORANGE);
+                  tft.setCursor(0,0,2);
+              }
+          } */
+
+          if (rs == 0) {
+              //sprintf(sbuf,"%02x:%d ", val, cs1);
+              //tft.print(sbuf);
+              if ((cs1 == 1) & ((val >> 4) == 0xb)) {
+                page1 = val & 0xf;
+                xx1 = 0;
+              // sprintf(sbuf,"%02x, ", val);
+                //tft.print(sbuf);
+                  /*sprintf(sbuf,"cnt %d", cnt);
+                  tft.print(sbuf);*/
+                  cnt = 0;
+              } else
+              if ((cs2 == 99) & ((val >> 4) == 0xb)) {
+                page2 = val & 0xf;
+                xx2 = 0;
+                /*sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
+                tft.print(sbuf);*/
+              }
+              if (tft.getCursorY() >320 ) {
+                  tft.fillScreen(TFT_ORANGE);
+                  tft.setCursor(0,0,2);
+              }
+          } else if (rs == 1 ) {
+              if ((cs1 == 1) && (xx1 < 120)) {  // avoid overlap the right area
+                cnt++;
+                for (int i = 0; i < 8; i++ ) {
+                    if (((val >> i) & 0x1) == 1) {
+                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
+                    } else {
+                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
+                    }
+                }
+                xx1++;
+              } else
+              if (cs2 == 99 && (xx2 < 120)) {  // avoid overlap the right area
+                for (int i = 0; i < 8; i++ ) {
+                    if (((val >> i) & 0x1) == 1) {
+                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
+                    } else {
+                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_LIGHTGREY);
+                    }
+                }
+                xx2++;
+              }
+          }
+
+
+          //Serial.print(buffer_cs1[i]);
+          //Serial.print(", ");
+      }
+      start_index_cs1 = cur_index_cs1;
     }
 
     if(millis() > 100 + dmxInput[1].latest_packet_timestamp()) {
         Serial.println("no data!");
-        return;
+        //return;
+    } else {
+      uint cur_index_cs2 = (uint) dmxInput[1].get_capture_index();  
+      if (start_index_cs2 > cur_index_cs2)
+        start_index_cs2 = 0;
+
+      for (uint i = start_index_cs2; i < cur_index_cs2; i++)  
+      {
+          char sbuf[50];
+
+          uint8_t val = buffer_cs2[i] & 0xff;
+          uint8_t rs = (buffer_cs2[i] >> 9) & 1 ;
+  
+          uint8_t cs1 = 1; //(buffer_cs2[i] >> 10) & 1 ;
+          uint8_t cs2 = 1; //(buffer_cs2[i] >> 11) & 1 ;
+          
+          /*if ( ((val >> 4) == 0xb) && rs == 0) {
+          sprintf(sbuf,"%08x:%02x:%d:%d ", buffer_cs2[i], val, rs, cs1);
+          tft.print(sbuf);
+              if (tft.getCursorY() >320 ) {
+                  tft.fillScreen(TFT_ORANGE);
+                  tft.setCursor(0,0,2);
+              }
+          } */
+
+          if (rs == 0) {
+              //sprintf(sbuf,"%02x:%d ", val, cs1);
+              //tft.print(sbuf);
+              if ((cs1 == 99) & ((val >> 4) == 0xb)) {
+                page1 = val & 0xf;
+                xx1 = 0;
+              // sprintf(sbuf,"%02x, ", val);
+                //tft.print(sbuf);
+                  /*sprintf(sbuf,"cnt %d", cnt);
+                  tft.print(sbuf);*/
+                  cnt = 0;
+              } else
+              if ((cs2 == 1) & ((val >> 4) == 0xb)) {
+                page2 = val & 0xf;
+                xx2 = 0;
+                /*sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
+                tft.print(sbuf);*/
+              }
+              if (tft.getCursorY() >320 ) {
+                  tft.fillScreen(TFT_ORANGE);
+                  tft.setCursor(0,0,2);
+              }
+          } else if (rs == 1 ) {
+              if ((cs1 == 99) && (xx1 < 120)) {  // avoid overlap the right area
+                cnt++;
+                for (int i = 0; i < 8; i++ ) {
+                    if (((val >> i) & 0x1) == 1) {
+                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
+                    } else {
+                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
+                    }
+                }
+                xx1++;
+              } else
+              if (cs2 == 1 && (xx2 < 120)) {  // avoid overlap the right area
+                for (int i = 0; i < 8; i++ ) {
+                    if (((val >> i) & 0x1) == 1) {
+                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_RED);
+                    } else {
+                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_LIGHTGREY);
+                    }
+                }
+                xx2++;
+              }
+          }
+
+
+          //Serial.print(buffer_cs2[i]);
+          //Serial.print(", ");
+      }
+      start_index_cs2 = cur_index_cs2;
     }
 
     // Wait for next DMX packet
@@ -134,81 +286,10 @@ void loop()
     // Print the DMX channels
     //Serial.print("Received packet: ");
     //for (uint i = 0; i < sizeof(buffer) /2 ; i++)  
-    uint cur_index = (uint) dmxInput[0].get_capture_index();  
-    if (start_index > cur_index)
-      start_index = 0;
-
-    for (uint i = start_index; i < cur_index; i++)  
-    {
-        char sbuf[50];
-
-        uint8_t val = buffer_cs1[i] & 0xff;
-        uint8_t rs = (buffer_cs1[i] >> 9) & 1 ;
- 
-        uint8_t cs1 = (buffer_cs1[i] >> 10) & 1 ;
-        uint8_t cs2 = (buffer_cs1[i] >> 11) & 1 ;
-        
-        /*if ( ((val >> 4) == 0xb) && rs == 0) {
-        sprintf(sbuf,"%08x:%02x:%d:%d ", buffer_cs1[i], val, rs, cs1);
-        tft.print(sbuf);
-             if (tft.getCursorY() >320 ) {
-                tft.fillScreen(TFT_ORANGE);
-                tft.setCursor(0,0,2);
-            }
-        } */
-
-        if (rs == 0) {
-            //sprintf(sbuf,"%02x:%d ", val, cs1);
-            //tft.print(sbuf);
-            if ((cs1 == 1) & ((val >> 4) == 0xb)) {
-              page1 = val & 0xf;
-              xx1 = 0;
-             // sprintf(sbuf,"%02x, ", val);
-              //tft.print(sbuf);
-                /*sprintf(sbuf,"cnt %d", cnt);
-                tft.print(sbuf);*/
-                cnt = 0;
-            } else
-            if ((cs2 == 2) & ((val >> 4) == 0xb)) {
-              page2 = val & 0xf;
-              xx2 = 0;
-              /*sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
-              tft.print(sbuf);*/
-            }
-            if (tft.getCursorY() >320 ) {
-                tft.fillScreen(TFT_ORANGE);
-                tft.setCursor(0,0,2);
-            }
-        } else if (rs == 1 ) {
-            if ((cs1 == 1) && (xx1 < 120)) {  // avoid overlap the right area
-              cnt++;
-              for (int i = 0; i < 8; i++ ) {
-                  if (((val >> i) & 0x1) == 1) {
-                    tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
-                  } else {
-                    tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_WHITE);
-                  }
-              }
-              xx1++;
-            } else
-            if (cs2 == 1 && (xx2 < 120)) {  // avoid overlap the right area
-              for (int i = 0; i < 8; i++ ) {
-                  if (((val >> i) & 0x1) == 1) {
-                    tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
-                  } else {
-                    tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_LIGHTGREY);
-                  }
-              }
-              xx2++;
-            }
-        }
 
 
-        //Serial.print(buffer_cs1[i]);
-        //Serial.print(", ");
-    }
     //Serial.println("");
-    start_index = cur_index;
+
 
     // Blink the LED to indicate that a packet was received
     digitalWrite(LED_BUILTIN, HIGH);

@@ -50,8 +50,8 @@ bitloop:
 
 
 .wrap_target
-    wait 0 pin 10             ; cs2
-    wait 1 pin 10                      ; Stall until start bit is asserted
+    wait 0 pin 11             ; cs2
+    wait 1 pin 11                      ; Stall until start bit is asserted
 
 bitloop:
     in pins, 10                        ; Shift data bit into ISR

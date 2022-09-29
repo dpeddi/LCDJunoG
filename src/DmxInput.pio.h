@@ -52,8 +52,8 @@ static inline pio_sm_config DmxInput_cs1_program_get_default_config(uint offset)
 
 static const uint16_t DmxInput_cs2_program_instructions[] = {
             //     .wrap_target
-    0x202a, //  0: wait   0 pin, 10                  
-    0x20aa, //  1: wait   1 pin, 10                  
+    0x202b, //  0: wait   0 pin, 11                  
+    0x20ab, //  1: wait   1 pin, 11                  
     0x400a, //  2: in     pins, 10                   
     0xe020, //  3: set    x, 0                       
     0x4021, //  4: in     x, 1                       

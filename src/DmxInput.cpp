@@ -106,7 +106,7 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
 
     _pio = pio;
     _sm = sm;
-    _sm = cs;
+    _cs = cs;
     _pin = pin;
     _start_channel = start_channel;
     _num_channels = num_channels;

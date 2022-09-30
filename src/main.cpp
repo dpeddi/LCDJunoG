@@ -83,11 +83,13 @@ void setup()
 	tft.setRotation(1);
 	tft.fillScreen(TFT_ORANGE);
 	drawBitmapZoom(0, 0,  (const uint8_t *)junog, 240, 90, TFT_BLACK);
+  delay(500);
 	tft.setTextColor(TFT_BLACK);
 	tft.setCursor(0, 280, 2);
 	tft.println("Roland Juno G Lcd Emulator v0.1");
+  tft.print(String(rp2040.f_cpu()));
 	
-	drawPinout(500);
+	drawPinout(1000);
 	
 	tft.fillScreen(TFT_BLACK);
 	tft.setCursor(0, 0, 2);
@@ -119,7 +121,7 @@ void loop()
 
     //delay(30);
 
-    if(millis() > 100 + dmxInput[0].latest_packet_timestamp()) {
+    if(millis() > 50 + dmxInput[0].latest_packet_timestamp()) {
         Serial.println("no data!");
         //return;
     } else {
@@ -200,7 +202,7 @@ void loop()
       start_index_cs1 = cur_index_cs1;
     }
 
-    if(millis() > 100 + dmxInput[1].latest_packet_timestamp()) {
+    if(millis() > 50 + dmxInput[1].latest_packet_timestamp()) {
         Serial.println("no data!");
         //return;
     } else {

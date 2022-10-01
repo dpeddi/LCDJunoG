@@ -36,12 +36,12 @@ so i moved to State Machine + DMA... it was a pain... few documentation id didn'
 
 
 I've studied some of the following project located on github to learn something more about dma
-https://github.com/raspberrypi/pico-examples/blob/master/pio/logic_analyser/logic_analyser.c
-https://github.com/gamblor21/rp2040-logic-analyzer/blob/main/rp2040-logic-analyzer.c
-https://github.com/panda5mt/picampinos
-https://github.com/ArduCAM/arducam_mic/blob/master/arducam_mic.c
-https://github.com/pinballpower/code_dmd
-https://github.com/jostlowe/Pico-DMX
+https://github.com/raspberrypi/pico-examples/blob/master/pio/logic_analyser/logic_analyser.c 
+https://github.com/gamblor21/rp2040-logic-analyzer/blob/main/rp2040-logic-analyzer.c 
+https://github.com/panda5mt/picampinos 
+https://github.com/ArduCAM/arducam_mic/blob/master/arducam_mic.c 
+https://github.com/pinballpower/code_dmd 
+https://github.com/jostlowe/Pico-DMX 
 
 After some attempts i choosed with Pico-DMX, adapted to my needs to get a basic working.
 

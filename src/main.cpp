@@ -12,6 +12,8 @@
 #include <SPI.h>
 #include <TFT_eSPI.h> // Hardware-specific library
 #include <junog.h>
+#include <extra.h>
+
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
 #include "DmxInput.h"
@@ -25,11 +27,15 @@ DmxInput dmxInput[2];
 
 //volatile uint16_t buffer_cs1[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
 //volatile uint16_t buffer_cs2[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
-volatile uint16_t buffer_cs1[3*12*120*10];
-volatile uint16_t buffer_cs2[3*12*120*10];
+volatile uint16_t buffer_cs1[12*123*10];
+volatile uint16_t buffer_cs2[12*123*10];
 
 void setup()
 {
+  //Serial.begin(115200);
+  // delay(2000);
+  //Serial.setTimeout(50);
+  Serial.println("juno g lcd emulator");
 	  tft.init();
 	//tft.setRotation(2);
 	tft.setRotation(1);
@@ -81,6 +87,9 @@ uint8_t xx[2] = {0,0};
 void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
 
     if (rs == 0) {
+        if (cs == 0) {
+          showcmd( val );
+        }
         if ((val >> 4) == 0xb) {
           page[cs] = val & 0xf;
           xx[cs] = 0;
@@ -112,7 +121,7 @@ void loop()
     //delay(30);
 
     if(millis() > 50 + dmxInput[0].latest_packet_timestamp()) {
-        Serial.println("no data!");
+        //Serial.println("no data!");
         //return;
     } else {
       uint cur_index_cs1 = (uint) dmxInput[0].get_capture_index();  
@@ -139,7 +148,7 @@ void loop()
     }
 
     if(millis() > 50 + dmxInput[1].latest_packet_timestamp()) {
-        Serial.println("no data!");
+        //Serial.println("no data!");
         //return;
     } else {
       uint cur_index_cs2 = (uint) dmxInput[1].get_capture_index();  

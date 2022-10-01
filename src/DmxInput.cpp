@@ -146,13 +146,13 @@ void dmxinput_dma_handler() {
             dma_hw->ints0 = 1u << i;
             volatile DmxInput *instance = active_inputs[i];
 
-            instance->_capture_index = instance->_capture_index % (3*12*120*10);
+            instance->_capture_index = instance->_capture_index % (12*123*10);
 
             dma_channel_set_write_addr(i, instance->_buf + instance->_capture_index, true);
             pio_sm_exec(instance->_pio, instance->_sm, pio_encode_jmp(prgm_offsets[pio_get_index(instance->_pio)]));
             pio_sm_clear_fifos(instance->_pio, instance->_sm);
 
-            instance->_capture_index += 3*12*120;
+            instance->_capture_index += 12*123;
 
 #ifdef ARDUINO
             instance->_last_packet_timestamp = millis();
@@ -197,7 +197,7 @@ void DmxInput::read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback
         NULL,    // dst
         &_pio->rxf[_sm],  // src
         //DMXINPUT_BUFFER_SIZE(_start_channel, _num_channels),  // transfer count,
-        1024,
+        12*123,//1024,
         false
     );
 

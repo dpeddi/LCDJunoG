@@ -1,3 +1,37 @@
+#include <TFT_eSPI.h> // Hardware-specific library
+extern TFT_eSPI tft;
+
+void showcmd(uint8_t val) {
+    char sbuf[40];
+	if ((val & 0xfe ) == 0xae) {
+		sprintf(sbuf, "cmd 0x%02x (on/off)", val);
+        Serial.println(sbuf);
+    } else if ((val & 0xfe ) == 0xa0) {
+		sprintf(sbuf, "cmd 0x%02x (ADC select)", val);
+        Serial.println(sbuf);
+	} else if ((val & 0xf0 ) == 0x40) {
+		sprintf(sbuf, "cmd 0x%02x (Initial display line)", val);
+        Serial.println(sbuf);
+	} else if ((val & 0xf0 ) == 0x20) {
+		sprintf(sbuf, "cmd 0x%02x (Regulator resistor select)", val);
+        Serial.println(sbuf);
+    } else if ((val & 0xf0 ) == 0xc0) {
+		sprintf(sbuf, "cmd 0x%02x (SHL select)", val);
+        Serial.println(sbuf);
+	} else if (val == 0xe2) {
+		sprintf(sbuf, "cmd 0x%02x (reset)", val);
+        Serial.println(sbuf);
+	} else if ((val & 0xf0 ) == 0x10 || (val & 0xf0 ) == 0x00) {
+		sprintf(sbuf, "cmd 0x%02x (set column address)", val);
+//        Serial.println(sbuf);
+    } else if ((val & 0xf0 ) == 0xb0) {
+		sprintf(sbuf, "cmd 0x%02x (Set page address)", val);
+        Serial.println(sbuf);
+    } else {
+		sprintf(sbuf, "cmd 0x%02x", val);
+        Serial.println(sbuf);
+    }
+}
 
 void drawBitmapZoom(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
 {

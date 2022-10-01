@@ -43,6 +43,6 @@ https://github.com/ArduCAM/arducam_mic/blob/master/arducam_mic.c
 https://github.com/pinballpower/code_dmd  
 https://github.com/jostlowe/Pico-DMX  
 
-After some attempts i choosed with Pico-DMX, adapted to my needs to get a basic working.
+After some attempts i choosed with Pico-DMX, adapted to my needs to get the display working.
 
 

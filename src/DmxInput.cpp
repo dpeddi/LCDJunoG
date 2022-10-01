@@ -148,7 +148,8 @@ void dmxinput_dma_handler() {
 
             instance->_capture_index = instance->_capture_index % (12*123*10);
 
-            dma_channel_set_write_addr(i, instance->_buf + instance->_capture_index, true);
+            //dma_channel_set_write_addr(i, instance->_buf + instance->_capture_index, true);
+            dma_channel_set_write_addr(i, instance->_buf, true);
             pio_sm_exec(instance->_pio, instance->_sm, pio_encode_jmp(prgm_offsets[pio_get_index(instance->_pio)]));
             pio_sm_clear_fifos(instance->_pio, instance->_sm);
 

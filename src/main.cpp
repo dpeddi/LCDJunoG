@@ -27,8 +27,8 @@ DmxInput dmxInput[2];
 
 //volatile uint16_t buffer_cs1[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
 //volatile uint16_t buffer_cs2[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
-volatile uint16_t buffer_cs1[12*123*10];
-volatile uint16_t buffer_cs2[12*123*10];
+volatile uint16_t buffer_cs1[2][12*123*10];
+//volatile uint16_t buffer_cs2[12*123*10];
 
 void setup()
 {
@@ -68,11 +68,12 @@ void setup()
     // Setup our DMX Input to read on GPIO 0, from channel 1 to 3
     dmxInput[0].begin(2, START_CHANNEL, NUM_CHANNELS, pio0, 1);
     dmxInput[1].begin(2, START_CHANNEL, NUM_CHANNELS, pio1, 2);
-    dmxInput[0].read_async(buffer_cs1);
-    dmxInput[1].read_async(buffer_cs2);
+    dmxInput[0].read_async(buffer_cs1[0]);
+    dmxInput[1].read_async(buffer_cs1[1]);
 
     // Setup the onboard LED so that we can blink when we receives packets
     pinMode(LED_BUILTIN, OUTPUT);
+
 }
 
 volatile int start_index[2] = {0,0};
@@ -113,47 +114,27 @@ void loop()
 
     //delay(30);
 
-    if(millis() > 50 + dmxInput[0].latest_packet_timestamp() ) {
+    if(millis() > 50 + dmxInput[0].latest_packet_timestamp() && millis() > 50 + dmxInput[1].latest_packet_timestamp() ) {
         //Serial.println("no data!");
-        //return;
-    } else {
-      uint cur_index_cs1 = (uint) dmxInput[0].get_capture_index();  
-      if (start_index[0] > cur_index_cs1)
-        start_index[0] = 0;
+        return;
+    } 
 
-      for (uint i = start_index[0]; i < cur_index_cs1; i++)  
+
+      for (uint i = 0; i < 123*12; i++)  
       {
+
+        for (uint8_t j = 0; j <2; j++) {
+
+
           char sbuf[50];
 
-          uint8_t val = buffer_cs1[i] & 0xff;
-          uint8_t rs = (buffer_cs1[i] >> 9) & 1;
+          uint8_t val = buffer_cs1[j][i] & 0xff;
+          uint8_t rs = (buffer_cs1[j][i] >> 9) & 1;
            
-          draw_juno_g(val, rs, 0);
-
+          draw_juno_g(val, rs, j);
+        }
       }
-      start_index[0] = cur_index_cs1;
-    }
 
-    if(millis() > 50 + dmxInput[1].latest_packet_timestamp()) {
-        //Serial.println("no data!");
-        //return;
-    } else {
-      uint cur_index_cs2 = (uint) dmxInput[1].get_capture_index();  
-      if (start_index[1] > cur_index_cs2)
-        start_index[1] = 0;
-
-      for (uint i = start_index[1]; i < cur_index_cs2; i++)  
-      {
-          char sbuf[50];
-
-          uint8_t val = buffer_cs2[i] & 0xff;
-          uint8_t rs = (buffer_cs2[i] >> 9) & 1 ;
-  
-          draw_juno_g(val, rs, 1);
-
-      }
-      start_index[1] = cur_index_cs2;
-    }
 
     // Wait for next DMX packet
     //dmxInput[0].read(buffer);

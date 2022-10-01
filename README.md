@@ -35,7 +35,7 @@ So i implemented a sketch to read data using IRQ... but even the RP2040 failed..
 so i moved to State Machine + DMA... it was a pain... few documentation id didn't worked at all..
 
 
-I've studied some of the following project located on github to learn something more about dma
+I've studied some of the following project located on github to learn something more about dma  
 https://github.com/raspberrypi/pico-examples/blob/master/pio/logic_analyser/logic_analyser.c  
 https://github.com/gamblor21/rp2040-logic-analyzer/blob/main/rp2040-logic-analyzer.c  
 https://github.com/panda5mt/picampinos  

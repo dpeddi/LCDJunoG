@@ -17,79 +17,41 @@ TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 #include "DmxInput.h"
 DmxInput dmxInput[2];
 
+#define ZOOM_X 2
+#define ZOOM_Y 3
+
 #define START_CHANNEL 1
 #define NUM_CHANNELS 8192
 
-volatile uint16_t buffer_cs1[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
-volatile uint16_t buffer_cs2[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
-
-void drawBitmapZoom(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
-{
-  //begin_tft_write();          // Sprite class can use this function, avoiding begin_tft_write()
-  //inTransaction = true;
-
-  int32_t i, j, byteWidth = (w + 7) / 8;
-
-  for (j = 0; j < h*3; j++) {
-    for (i = 0; i < w*2; i++ ) {
-      if (pgm_read_byte(bitmap + j / 3 * byteWidth + i / 2 / 8) & (128 >> ((i/2) & 7))) {
-        tft.drawPixel(x + i, y + j, color);
-      }
-    }
-  }
-
-  //inTransaction = lockTransaction;
-  //end_tft_write();              // Does nothing if Sprite class uses this function
-}
-
-void drawPinout(uint16_t delayTime) {
-    //tft.fillScreen(TFT_ORANGE);
-    tft.fillRect(0, 0, 480, 270, TFT_ORANGE);
-    tft.setCursor(200, 0, 2); 
-    tft.setTextColor(TFT_BLACK); 
-    tft.setTextSize(2);
-    tft.println("Pinout:");
-    
-    tft.setCursor(0, tft.getCursorY(), 2); 
-
-    tft.print("D0 " + String(JUNO_D0));
-    tft.setCursor(240, tft.getCursorY(), 2); 
-    tft.println("CS1 " + String(JUNO_CS1));
-
-    tft.print("D1 " + String(JUNO_D1));
-    tft.setCursor(240, tft.getCursorY(), 2); 
-    tft.println("CS2 " + String(JUNO_CS2));
-
-    tft.print("D2 " + String(JUNO_D2));
-    tft.setCursor(240, tft.getCursorY(), 2); 
-    tft.println("WE  " + String(JUNO_WE));
-
-    tft.print("D3 " + String(JUNO_D3));
-    tft.setCursor(240, tft.getCursorY(), 2); 
-    tft.println("RS  " + String(JUNO_RS));
-
-    tft.println("D5 " + String(JUNO_D5));
-    tft.println("D4 " + String(JUNO_D4));
-    tft.println("D6 " + String(JUNO_D6));
-    tft.println("D7 " + String(JUNO_D7));
-
-    delay(delayTime);
-}
+//volatile uint16_t buffer_cs1[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
+//volatile uint16_t buffer_cs2[DMXINPUT_BUFFER_SIZE(START_CHANNEL, NUM_CHANNELS)];
+volatile uint16_t buffer_cs1[3*12*120*10];
+volatile uint16_t buffer_cs2[3*12*120*10];
 
 void setup()
 {
 	  tft.init();
 	//tft.setRotation(2);
 	tft.setRotation(1);
+#ifdef DRAW_SPLASH
 	tft.fillScreen(TFT_ORANGE);
 	drawBitmapZoom(0, 0,  (const uint8_t *)junog, 240, 90, TFT_BLACK);
   delay(500);
+#endif
+
+#define DRAW_INFO
+#ifdef DRAW_INFO
+	tft.fillScreen(TFT_ORANGE);
 	tft.setTextColor(TFT_BLACK);
 	tft.setCursor(0, 280, 2);
 	tft.println("Roland Juno G Lcd Emulator v0.1");
-  tft.print(String(rp2040.f_cpu()));
-	
+  tft.print("CPU_FREQ:" + String(rp2040.f_cpu()));
+  delay(1000);
+#endif
+
+#ifdef DRAW_PINOUT  
 	drawPinout(1000);
+#endif
 	
 	tft.fillScreen(TFT_BLACK);
 	tft.setCursor(0, 0, 2);
@@ -107,15 +69,43 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
 }
 
-int page1 = 0;
-int page2 = 0;
-int xx1 = 0;
-int xx2 = 0;
 
 int cnt = 0;
 
 int start_index_cs1 = 0;
 int start_index_cs2 = 0;
+
+uint8_t page[2] = {0,0};
+uint8_t xx[2] = {0,0};
+
+void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
+
+    if (rs == 0) {
+        if ((val >> 4) == 0xb) {
+          page[cs] = val & 0xf;
+          xx[cs] = 0;
+          cnt = 0;
+        } /*else
+        if (tft.getCursorY() >320 ) {
+            tft.fillScreen(TFT_ORANGE);
+            tft.setCursor(0,0,2);
+        } */
+    } else if (rs == 1 ) {
+        if (xx[cs] < 120) {  // avoid overlap the right area
+          cnt++;
+          for (int i = 0; i < 8; i++ ) {
+              if (((val >> i) & 0x1) == 1) {
+                tft.drawPixel(120 * cs * ZOOM_X + xx[cs] * ZOOM_X, (page[cs] * 8 + i ) * ZOOM_Y, TFT_BLACK);
+              } else {
+                tft.drawPixel(120 * cs * ZOOM_X + xx[cs] * ZOOM_X, (page[cs] * 8 + i ) * ZOOM_Y, TFT_ORANGE);
+              }
+          }
+          xx[cs]++;
+        } 
+    }
+
+}
+
 void loop()
 {
 
@@ -140,61 +130,7 @@ void loop()
           uint8_t cs1 = 1;// (buffer_cs1[i] >> 10) & 1 ;
           uint8_t cs2 = 1;// (buffer_cs1[i] >> 11) & 1 ;
           
-          /*if ( ((val >> 4) == 0xb) && rs == 0) {
-          sprintf(sbuf,"%08x:%02x:%d:%d ", buffer_cs1[i], val, rs, cs1);
-          tft.print(sbuf);
-              if (tft.getCursorY() >320 ) {
-                  tft.fillScreen(TFT_ORANGE);
-                  tft.setCursor(0,0,2);
-              }
-          } */
-
-          if (rs == 0) {
-              //sprintf(sbuf,"%02x:%d ", val, cs1);
-              //tft.print(sbuf);
-              if ((cs1 == 1) & ((val >> 4) == 0xb)) {
-                page1 = val & 0xf;
-                xx1 = 0;
-              // sprintf(sbuf,"%02x, ", val);
-                //tft.print(sbuf);
-                  /*sprintf(sbuf,"cnt %d", cnt);
-                  tft.print(sbuf);*/
-                  cnt = 0;
-              } else
-              if ((cs2 == 99) & ((val >> 4) == 0xb)) {
-                page2 = val & 0xf;
-                xx2 = 0;
-                /*sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
-                tft.print(sbuf);*/
-              }
-              if (tft.getCursorY() >320 ) {
-                  tft.fillScreen(TFT_ORANGE);
-                  tft.setCursor(0,0,2);
-              }
-          } else if (rs == 1 ) {
-              if ((cs1 == 1) && (xx1 < 120)) {  // avoid overlap the right area
-                cnt++;
-                for (int i = 0; i < 8; i++ ) {
-                    if (((val >> i) & 0x1) == 1) {
-                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
-                    } else {
-                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_ORANGE);
-                    }
-                }
-                xx1++;
-              } else
-              if (cs2 == 99 && (xx2 < 120)) {  // avoid overlap the right area
-                for (int i = 0; i < 8; i++ ) {
-                    if (((val >> i) & 0x1) == 1) {
-                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
-                    } else {
-                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_LIGHTGREY);
-                    }
-                }
-                xx2++;
-              }
-          }
-
+          draw_juno_g(val, rs, 0);
 
           //Serial.print(buffer_cs1[i]);
           //Serial.print(", ");
@@ -229,52 +165,7 @@ void loop()
               }
           } */
 
-          if (rs == 0) {
-              //sprintf(sbuf,"%02x:%d ", val, cs1);
-              //tft.print(sbuf);
-              if ((cs1 == 99) & ((val >> 4) == 0xb)) {
-                page1 = val & 0xf;
-                xx1 = 0;
-              // sprintf(sbuf,"%02x, ", val);
-                //tft.print(sbuf);
-                  /*sprintf(sbuf,"cnt %d", cnt);
-                  tft.print(sbuf);*/
-                  cnt = 0;
-              } else
-              if ((cs2 == 1) & ((val >> 4) == 0xb)) {
-                page2 = val & 0xf;
-                xx2 = 0;
-                /*sprintf(sbuf,"val: %02x page:%03d\n", val, page1);
-                tft.print(sbuf);*/
-              }
-              if (tft.getCursorY() >320 ) {
-                  tft.fillScreen(TFT_ORANGE);
-                  tft.setCursor(0,0,2);
-              }
-          } else if (rs == 1 ) {
-              if ((cs1 == 99) && (xx1 < 120)) {  // avoid overlap the right area
-                cnt++;
-                for (int i = 0; i < 8; i++ ) {
-                    if (((val >> i) & 0x1) == 1) {
-                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_BLACK);
-                    } else {
-                      tft.drawPixel(xx1*2, (page1 * 8 + i ) * 3, TFT_ORANGE);
-                    }
-                }
-                xx1++;
-              } else
-              if (cs2 == 1 && (xx2 < 120)) {  // avoid overlap the right area
-                for (int i = 0; i < 8; i++ ) {
-                    if (((val >> i) & 0x1) == 1) {
-                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_BLACK);
-                    } else {
-                      tft.drawPixel((120 * 2 + xx2 * 2), (page2 * 8 + i) * 3, TFT_ORANGE);
-                    }
-                }
-                xx2++;
-              }
-          }
-
+          draw_juno_g(val, rs, 1);
 
           //Serial.print(buffer_cs2[i]);
           //Serial.print(", ");
@@ -298,3 +189,7 @@ void loop()
     delay(10);
     digitalWrite(LED_BUILTIN, LOW);
 }
+
+
+//0xb0*3 - 0xbb*3  *120
+//12 *3 *120 = 4320

@@ -1,12 +1,15 @@
-
 /*
- * Copyright (c) 2021 Jostein Løwer 
+ * Copyright (c) 2022 Eddi De Pieri
+ * Most code borrowed by Pico-DMX by Jostein Løwer 
  *
  * SPDX-License-Identifier: BSD-3-Clause
+ * 
+ * Description: 
+ * Roland Juno G LCD Emulator
  */
 
-#ifndef DMX_INPUT_H
-#define DMX_INPUT_H
+#ifndef LCD_JUNOG_H
+#define LCD_JUNOG_H
 
 #if defined(ARDUINO_ARCH_MBED)
   #include <dma.h>
@@ -19,15 +22,9 @@
   #include "hardware/pio.h"
 #endif
 
-#define DMX_UNIVERSE_SIZE 512
-#define DMX_SM_FREQ 21000000
-
-#define DMXINPUT_BUFFER_SIZE(start_channel, num_channels) (num_channels+1)
-class DmxInput
+class LCDJunoG
 {
     uint _pin;
-    int32_t _start_channel;
-    int32_t _num_channels;
 
 public:
     /*
@@ -40,7 +37,7 @@ public:
     volatile uint _cs;
 
     volatile unsigned long _last_packet_timestamp=0;
-    void (*_cb)(DmxInput*);
+    void (*_cb)(LCDJunoG*);
     /*
         All different return codes for the DMX class. Only the SUCCESS
         Return code guarantees that the DMX output instance was properly configured
@@ -71,7 +68,7 @@ public:
        run 3 more on pio1  
     */
 
-    return_code begin(uint pin, uint start_channel, uint num_channels, PIO pio = pio0, uint cs = 1);
+    return_code begin(uint pin, PIO pio = pio0, uint cs = 1);
 
     /*
         Read the selected channels from .begin(...) into a buffer.
@@ -91,7 +88,7 @@ public:
         If you want to be notified whenever a new DMX frame has been received,
         provide a callback function that will be called without arguments.
     */
-    void read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback)(DmxInput* instance) = nullptr);
+    void read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback)(LCDJunoG* instance) = nullptr);
 
     int get_capture_index();
 

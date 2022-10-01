@@ -9,13 +9,13 @@
 #endif
 
 // ------------ //
-// DmxInput_cs1 //
+// LCDJunoG_cs1 //
 // ------------ //
 
-#define DmxInput_cs1_wrap_target 0
-#define DmxInput_cs1_wrap 4
+#define LCDJunoG_cs1_wrap_target 0
+#define LCDJunoG_cs1_wrap 4
 
-static const uint16_t DmxInput_cs1_program_instructions[] = {
+static const uint16_t LCDJunoG_cs1_program_instructions[] = {
             //     .wrap_target
     0x202a, //  0: wait   0 pin, 10                  
     0x20aa, //  1: wait   1 pin, 10                  
@@ -26,27 +26,27 @@ static const uint16_t DmxInput_cs1_program_instructions[] = {
 };
 
 #if !PICO_NO_HARDWARE
-static const struct pio_program DmxInput_cs1_program = {
-    .instructions = DmxInput_cs1_program_instructions,
+static const struct pio_program LCDJunoG_cs1_program = {
+    .instructions = LCDJunoG_cs1_program_instructions,
     .length = 5,
     .origin = -1,
 };
 
-static inline pio_sm_config DmxInput_cs1_program_get_default_config(uint offset) {
+static inline pio_sm_config LCDJunoG_cs1_program_get_default_config(uint offset) {
     pio_sm_config c = pio_get_default_sm_config();
-    sm_config_set_wrap(&c, offset + DmxInput_cs1_wrap_target, offset + DmxInput_cs1_wrap);
+    sm_config_set_wrap(&c, offset + LCDJunoG_cs1_wrap_target, offset + LCDJunoG_cs1_wrap);
     return c;
 }
 #endif
 
 // ------------ //
-// DmxInput_cs2 //
+// LCDJunoG_cs2 //
 // ------------ //
 
-#define DmxInput_cs2_wrap_target 0
-#define DmxInput_cs2_wrap 4
+#define LCDJunoG_cs2_wrap_target 0
+#define LCDJunoG_cs2_wrap 4
 
-static const uint16_t DmxInput_cs2_program_instructions[] = {
+static const uint16_t LCDJunoG_cs2_program_instructions[] = {
             //     .wrap_target
     0x202b, //  0: wait   0 pin, 11                  
     0x20ab, //  1: wait   1 pin, 11                  
@@ -57,15 +57,15 @@ static const uint16_t DmxInput_cs2_program_instructions[] = {
 };
 
 #if !PICO_NO_HARDWARE
-static const struct pio_program DmxInput_cs2_program = {
-    .instructions = DmxInput_cs2_program_instructions,
+static const struct pio_program LCDJunoG_cs2_program = {
+    .instructions = LCDJunoG_cs2_program_instructions,
     .length = 5,
     .origin = -1,
 };
 
-static inline pio_sm_config DmxInput_cs2_program_get_default_config(uint offset) {
+static inline pio_sm_config LCDJunoG_cs2_program_get_default_config(uint offset) {
     pio_sm_config c = pio_get_default_sm_config();
-    sm_config_set_wrap(&c, offset + DmxInput_cs2_wrap_target, offset + DmxInput_cs2_wrap);
+    sm_config_set_wrap(&c, offset + LCDJunoG_cs2_wrap_target, offset + LCDJunoG_cs2_wrap);
     return c;
 }
 #endif

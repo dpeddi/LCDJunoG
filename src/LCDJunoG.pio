@@ -1,11 +1,9 @@
-; Author: Jostein Løwer, github: jostlowe
+; Author: Eddi De Pieri, github: dpeddi
 ; SPDX-License-Identifier: BSD-3-Clause
 ; 
-; PIO program for inputting the DMX lighting protocol.
-; (Almost) compliant with ANSI E1.11-2008 (R2018)
-; The program assumes a PIO clock frequency of exactly 1MHz
+; Roland Juno G LCD Emulator
 
-.program DmxInput_cs1
+.program LCDJunoG_cs1
 
 .wrap_target
     wait 0 pin 10             ; cs1
@@ -20,7 +18,7 @@ bitloop:
 .wrap
 
 
-.program DmxInput_cs2
+.program LCDJunoG_cs2
 
 .wrap_target
     wait 0 pin 11             ; cs2

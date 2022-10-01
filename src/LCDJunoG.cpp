@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "DmxInput.h"
-#include "DmxInput.pio.h"
+#include "LCDJunoG.h"
+#include "LCDJunoG.pio.h"
 
 #if defined(ARDUINO_ARCH_MBED)
   #include <clocks.h>
@@ -24,29 +24,29 @@ This array tells the interrupt handler which instance has interrupted.
 The interrupt handler has only the ints0 register to go on, so this array needs as many spots as there are DMA channels. 
 */
 #define NUM_DMA_CHANS 12
-volatile DmxInput *active_inputs[NUM_DMA_CHANS] = {nullptr};
+volatile LCDJunoG *active_inputs[NUM_DMA_CHANS] = {nullptr};
 
-DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_channels, PIO pio, uint cs)
+LCDJunoG::return_code LCDJunoG::begin(uint pin, PIO pio, uint cs)
 {
     uint pio_ind = pio_get_index(pio);
     if(!prgm_loaded[pio_ind]) {
         /* 
-        Attempt to load the DMX PIO assembly program into the PIO program memory
+        Attempt to load the PIO assembly program into the PIO program memory
         */
 
         if (cs == 1) {
-            if (!pio_can_add_program(pio, &DmxInput_cs1_program))
+            if (!pio_can_add_program(pio, &LCDJunoG_cs1_program))
             {
                 return ERR_INSUFFICIENT_PRGM_MEM;
             }
-            prgm_offsets[pio_ind] = pio_add_program(pio, &DmxInput_cs1_program);
+            prgm_offsets[pio_ind] = pio_add_program(pio, &LCDJunoG_cs1_program);
 
         } else if (cs == 2) {
-            if (!pio_can_add_program(pio, &DmxInput_cs2_program))
+            if (!pio_can_add_program(pio, &LCDJunoG_cs2_program))
             {
                 return ERR_INSUFFICIENT_PRGM_MEM;
             }
-            prgm_offsets[pio_ind] = pio_add_program(pio, &DmxInput_cs2_program);
+            prgm_offsets[pio_ind] = pio_add_program(pio, &LCDJunoG_cs2_program);
         }
         prgm_loaded[pio_ind] = true;
     }
@@ -77,9 +77,9 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
     // Generate the default PIO state machine config provided by pioasm
     pio_sm_config sm_conf;
     if (cs == 1) 
-        sm_conf = DmxInput_cs1_program_get_default_config(prgm_offsets[pio_ind]);
+        sm_conf = LCDJunoG_cs1_program_get_default_config(prgm_offsets[pio_ind]);
     else if (cs == 2) 
-        sm_conf = DmxInput_cs2_program_get_default_config(prgm_offsets[pio_ind]);
+        sm_conf = LCDJunoG_cs2_program_get_default_config(prgm_offsets[pio_ind]);
     sm_config_set_in_pins(&sm_conf, pin); // for WAIT, IN
     sm_config_set_jmp_pin(&sm_conf, pin); // for JMP
 
@@ -89,28 +89,17 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
     // Deeper FIFO as we're not doing any TX
     sm_config_set_fifo_join(&sm_conf, PIO_FIFO_JOIN_RX);
 
-    // Setup the clock divider to run the state machine at exactly 1MHz
-    /*uint clk_div = clock_get_hz(clk_sys) / DMX_SM_FREQ;
-    sm_config_set_clkdiv(&sm_conf, clk_div);*/
-
-
     // Load our configuration, jump to the start of the program and run the State Machine
     pio_sm_init(pio, sm, prgm_offsets[pio_ind], &sm_conf);
-    //sm_config_set_in_shift(&c, true, false, n_bits)
-
-    //pio_sm_put_blocking(pio, sm, (start_channel + num_channels) - 1);
 
     _pio = pio;
     _sm = sm;
     _cs = cs;
     _pin = pin;
-    _start_channel = start_channel;
-    _num_channels = num_channels;
     _buf = nullptr;
     _cb = nullptr;
 
     _dma_chan = dma_claim_unused_channel(true);
-
 
     if (active_inputs[_dma_chan] != nullptr) {
         return ERR_NO_SM_AVAILABLE;
@@ -120,7 +109,7 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
     return SUCCESS;
 }
 
-void DmxInput::read(volatile uint16_t *buffer)
+void LCDJunoG::read(volatile uint16_t *buffer)
 {
     if(_buf==nullptr) {
         read_async(buffer);
@@ -131,11 +120,11 @@ void DmxInput::read(volatile uint16_t *buffer)
     }
 }
 
-void dmxinput_dma_handler() {
+void lcdjunog_dma_handler() {
     for(int i=0;i<NUM_DMA_CHANS;i++) {
         if(active_inputs[i]!=nullptr && (dma_hw->ints0 & (1u<<i))) {
             dma_hw->ints0 = 1u << i;
-            volatile DmxInput *instance = active_inputs[i];
+            volatile LCDJunoG *instance = active_inputs[i];
 
             dma_channel_set_write_addr(i, instance->_buf, true);
             pio_sm_exec(instance->_pio, instance->_sm, pio_encode_jmp(prgm_offsets[pio_get_index(instance->_pio)]));
@@ -148,13 +137,13 @@ void dmxinput_dma_handler() {
 #endif
             // Trigger the callback if we have one
             if (instance->_cb != nullptr) {
-                (*(instance->_cb))((DmxInput*)instance);
+                (*(instance->_cb))((LCDJunoG*)instance);
             }
         }
     }
 }
 
-void DmxInput::read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback)(DmxInput*)) {
+void LCDJunoG::read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback)(LCDJunoG*)) {
 
     _buf = buffer;
     if (inputUpdatedCallback!=nullptr) {
@@ -183,13 +172,12 @@ void DmxInput::read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback
         &cfg,
         NULL,    // dst
         &_pio->rxf[_sm],  // src
-        //DMXINPUT_BUFFER_SIZE(_start_channel, _num_channels),  // transfer count,
-        12*123,//1024,
+        12 * 123,
         false
     );
 
     dma_channel_set_irq0_enabled(_dma_chan, true);
-    irq_set_exclusive_handler(DMA_IRQ_0, dmxinput_dma_handler);
+    irq_set_exclusive_handler(DMA_IRQ_0, lcdjunog_dma_handler);
     irq_set_enabled(DMA_IRQ_0, true);
 
     //aaand start!
@@ -205,20 +193,20 @@ void DmxInput::read_async(volatile uint16_t *buffer, void (*inputUpdatedCallback
     pio_sm_set_enabled(_pio, _sm, true);
 }
 
-unsigned long DmxInput::latest_packet_timestamp() {
+unsigned long LCDJunoG::latest_packet_timestamp() {
     return _last_packet_timestamp;
 }
 
-uint DmxInput::pin() {
+uint LCDJunoG::pin() {
     return _pin;
 }
 
-void DmxInput::end()
+void LCDJunoG::end()
 {
     // Stop the PIO state machine
     pio_sm_set_enabled(_pio, _sm, false);
 
-    // Remove the PIO DMX program from the PIO program memory
+    // Remove the PIO program from the PIO program memory
     uint pio_id = pio_get_index(_pio);
     bool inuse = false;
     for(uint i=0;i<NUM_DMA_CHANS;i++) {
@@ -233,9 +221,9 @@ void DmxInput::end()
     if(!inuse) {
         prgm_loaded[pio_id] = false;
         if (_cs == 1)
-            pio_remove_program(_pio, &DmxInput_cs1_program, prgm_offsets[pio_id]);
+            pio_remove_program(_pio, &LCDJunoG_cs1_program, prgm_offsets[pio_id]);
         else if (_cs == 2)
-            pio_remove_program(_pio, &DmxInput_cs2_program, prgm_offsets[pio_id]);
+            pio_remove_program(_pio, &LCDJunoG_cs2_program, prgm_offsets[pio_id]);
 
         prgm_offsets[pio_id]=0;
     }

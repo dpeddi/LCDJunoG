@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2022 Eddi De Pieri
+ * Most code borrowed by Pico-DMX by Jostein Løwer 
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ * 
+ * Description: 
+ * Roland Juno G LCD Emulator
+ */
+
 #include <TFT_eSPI.h> // Hardware-specific library
 extern TFT_eSPI tft;
 

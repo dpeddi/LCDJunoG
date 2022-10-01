@@ -1,29 +1,27 @@
 /*
- * Copyright (c) 2021 Jostein Løwer 
+ * Copyright (c) 2022 Eddi De Pieri
+ * Most code borrowed by Pico-DMX by Jostein Løwer 
  *
  * SPDX-License-Identifier: BSD-3-Clause
  * 
  * Description: 
- * Starts a DMX Input on GPIO pin 0 and read channel 1-3 repeatedly
+ * Roland Juno G LCD Emulator
  */
 
 #include <Arduino.h>
 
 #include <SPI.h>
 #include <TFT_eSPI.h> // Hardware-specific library
-#include <junog.h>
-#include <extra.h>
+#include <LCDJunoG_splash.h>
+#include <LCDJunoG_extra.h>
 
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
-#include "DmxInput.h"
-DmxInput dmxInput[2];
+#include "LCDJunoG.h"
+LCDJunoG lcdJunoG[2];
 
 #define ZOOM_X 2
 #define ZOOM_Y 3
-
-#define START_CHANNEL 1
-#define NUM_CHANNELS 8192
 
 uint tft_xoffset = 0;
 uint tft_yoffset = 0;
@@ -80,10 +78,10 @@ void setup()
   tft.setTextSize(1);
   
   // Setup our DMX Input to read on GPIO 0, from channel 1 to 3
-  dmxInput[0].begin(2, START_CHANNEL, NUM_CHANNELS, pio0, 1);
-  dmxInput[1].begin(2, START_CHANNEL, NUM_CHANNELS, pio1, 2);
-  dmxInput[0].read_async(buffer_cs1[0]);
-  dmxInput[1].read_async(buffer_cs1[1]);
+  lcdJunoG[0].begin(2, pio0, 1);
+  lcdJunoG[1].begin(2, pio1, 2);
+  lcdJunoG[0].read_async(buffer_cs1[0]);
+  lcdJunoG[1].read_async(buffer_cs1[1]);
 
   // Setup the onboard LED so that we can blink when we receives packets
   pinMode(LED_BUILTIN, OUTPUT);
@@ -118,7 +116,7 @@ void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
 
 void loop()
 {
-  if(millis() > 50 + dmxInput[0].latest_packet_timestamp() && millis() > 50 + dmxInput[1].latest_packet_timestamp() ) {
+  if(millis() > 50 + lcdJunoG[0].latest_packet_timestamp() && millis() > 50 + lcdJunoG[1].latest_packet_timestamp() ) {
     //Serial.println("no data!");
     return;
   } 

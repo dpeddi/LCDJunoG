@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <SPI.h>
-#include <TFT_eSPI.h> // Hardware-specific library
-extern TFT_eSPI tft;
-
 #include "DmxInput.h"
 #include "DmxInput.pio.h"
 
@@ -112,7 +108,6 @@ DmxInput::return_code DmxInput::begin(uint pin, uint start_channel, uint num_cha
     _num_channels = num_channels;
     _buf = nullptr;
     _cb = nullptr;
-    _capture_index = 0;
 
     _dma_chan = dma_claim_unused_channel(true);
 
@@ -136,24 +131,15 @@ void DmxInput::read(volatile uint16_t *buffer)
     }
 }
 
-int DmxInput::get_capture_index() {
-    return _capture_index;
-}
-
 void dmxinput_dma_handler() {
     for(int i=0;i<NUM_DMA_CHANS;i++) {
         if(active_inputs[i]!=nullptr && (dma_hw->ints0 & (1u<<i))) {
             dma_hw->ints0 = 1u << i;
             volatile DmxInput *instance = active_inputs[i];
 
-            instance->_capture_index = instance->_capture_index % (12*123*10);
-
-            //dma_channel_set_write_addr(i, instance->_buf + instance->_capture_index, true);
             dma_channel_set_write_addr(i, instance->_buf, true);
             pio_sm_exec(instance->_pio, instance->_sm, pio_encode_jmp(prgm_offsets[pio_get_index(instance->_pio)]));
             pio_sm_clear_fifos(instance->_pio, instance->_sm);
-
-            instance->_capture_index += 12*123;
 
 #ifdef ARDUINO
             instance->_last_packet_timestamp = millis();
@@ -229,7 +215,6 @@ uint DmxInput::pin() {
 
 void DmxInput::end()
 {
-
     // Stop the PIO state machine
     pio_sm_set_enabled(_pio, _sm, false);
 

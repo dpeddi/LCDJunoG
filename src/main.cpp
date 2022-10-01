@@ -25,6 +25,9 @@ DmxInput dmxInput[2];
 #define START_CHANNEL 1
 #define NUM_CHANNELS 8192
 
+uint tft_xoffset = 0;
+uint tft_yoffset = 0;
+
 volatile uint16_t buffer_cs1[2][12*123*10];
 
 void intelaced_FillScreen() {
@@ -46,6 +49,8 @@ void setup()
   tft.init();
   //tft.setRotation(2);
   tft.setRotation(1);
+  tft_xoffset = (tft.width() - 240 * ZOOM_X) / 2 - ((tft.width() - 240 * ZOOM_X) / 2 % ZOOM_X);
+  tft_yoffset = (tft.height() - 96 * ZOOM_Y) / 2 - ((tft.height() - 96 * ZOOM_Y) / 2 % ZOOM_Y);
 #ifdef DRAW_SPLASH
   tft.fillScreen(TFT_ORANGE);
   drawBitmapZoom(0, 0, (const uint8_t *)junog, 240, 90, TFT_BLACK);
@@ -70,9 +75,7 @@ void setup()
 #ifdef DRAW_PINOUT  
   drawPinout(1000);
 #endif
-  
-  intelaced_FillScreen();
-
+   
   tft.setCursor(0, 0, 2);
   tft.setTextSize(1);
   
@@ -103,9 +106,9 @@ void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
     if (xx[cs] < 120) {  // avoid overlap the right area
       for (int i = 0; i < 8; i++ ) {
         if (((val >> i) & 0x1) == 1) {
-          tft.drawPixel(120 * cs * ZOOM_X + xx[cs] * ZOOM_X, (page[cs] * 8 + i ) * ZOOM_Y, TFT_BLACK);
+          tft.drawPixel(tft_xoffset + 120 * cs * ZOOM_X + xx[cs] * ZOOM_X, tft_yoffset + (page[cs] * 8 + i ) * ZOOM_Y, TFT_BLACK);
         } else {
-          tft.drawPixel(120 * cs * ZOOM_X + xx[cs] * ZOOM_X, (page[cs] * 8 + i ) * ZOOM_Y, TFT_ORANGE);
+          tft.drawPixel(tft_xoffset + 120 * cs * ZOOM_X + xx[cs] * ZOOM_X, tft_yoffset + (page[cs] * 8 + i ) * ZOOM_Y, TFT_ORANGE);
         }
       }
       xx[cs]++;
@@ -133,7 +136,3 @@ void loop()
   delay(10);
   digitalWrite(LED_BUILTIN, LOW);
 }
-
-
-//0xb0*3 - 0xbb*3  *120
-//12 *3 *120 = 4320

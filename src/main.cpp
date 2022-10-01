@@ -75,21 +75,19 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
 }
 
-
-int cnt = 0;
-
-int start_index[2] = {0,0};
-uint8_t page[2] = {0,0};
-uint8_t xx[2] = {0,0};
+volatile int start_index[2] = {0,0};
+volatile uint8_t page[2] = {0,0};
+volatile uint8_t xx[2] = {0,0};
 
 void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
 
     if (rs == 0) {
+#ifdef SHOWCMD
         showcmd( cs, val );
+#endif
         if ((val >> 4) == 0xb) {
           page[cs] = val & 0xf;
           xx[cs] = 0;
-          cnt = 0;
         } /*else
         if (tft.getCursorY() >320 ) {
             tft.fillScreen(TFT_ORANGE);
@@ -97,7 +95,6 @@ void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
         } */
     } else if (rs == 1 ) {
         if (xx[cs] < 120) {  // avoid overlap the right area
-          cnt++;
           for (int i = 0; i < 8; i++ ) {
               if (((val >> i) & 0x1) == 1) {
                 tft.drawPixel(120 * cs * ZOOM_X + xx[cs] * ZOOM_X, (page[cs] * 8 + i ) * ZOOM_Y, TFT_BLACK);
@@ -124,21 +121,15 @@ void loop()
       if (start_index[0] > cur_index_cs1)
         start_index[0] = 0;
 
-
       for (uint i = start_index[0]; i < cur_index_cs1; i++)  
       {
           char sbuf[50];
 
           uint8_t val = buffer_cs1[i] & 0xff;
-          uint8_t rs = (buffer_cs1[i] >> 9) & 1 ;
-  
-          uint8_t cs1 = 1;// (buffer_cs1[i] >> 10) & 1 ;
-          uint8_t cs2 = 1;// (buffer_cs1[i] >> 11) & 1 ;
-          
+          uint8_t rs = (buffer_cs1[i] >> 9) & 1;
+           
           draw_juno_g(val, rs, 0);
 
-          //Serial.print(buffer_cs1[i]);
-          //Serial.print(", ");
       }
       start_index[0] = cur_index_cs1;
     }

@@ -6,17 +6,6 @@
 ; The program assumes a PIO clock frequency of exactly 1MHz
 
 .program DmxInput_cs1
-;.define dmx_bit 4                     ; As DMX has a baudrate of 250.000kBaud, a single bit is 4us
-
-;break_reset:
-;    set x, 29                         ; Setup a counter to count the iterations on break_loop
-
-;break_loop:                           ; Break loop lasts for 8us. The entire break must be minimum 30*3us = 90us
-;    jmp pin break_reset               ; Go back to start if pin goes high during the break
-;    jmp x-- break_loop   [1]          ; Decrease the counter and go back to break loop if x>0 so that the break is not done
-;    wait 1 pin 0                      ; Stall until line goes high for the Mark-After-Break (MAB) 
-;
-
 
 .wrap_target
     wait 0 pin 10             ; cs1
@@ -25,43 +14,22 @@
 bitloop:
     in pins, 10                        ; Shift data bit into ISR
         
-    set x, 1
-    in x, 1
-    
-    set x, 0
-    in x, 1
-    in NULL, 20                       ; Push 24 more bits into the ISR so that our one byte is at the position where the DMA expects it
+    in NULL, 22                       ; Push 24 more bits into the ISR so that our one byte is at the position where the DMA expects it
     push                              ; Should probably do error checking on the stop bits some time in the future....
 
 .wrap
 
 
 .program DmxInput_cs2
-;.define dmx_bit 4                     ; As DMX has a baudrate of 250.000kBaud, a single bit is 4us
-
-;break_reset:
-;    set x, 29                         ; Setup a counter to count the iterations on break_loop
-
-;break_loop:                           ; Break loop lasts for 8us. The entire break must be minimum 30*3us = 90us
-;    jmp pin break_reset               ; Go back to start if pin goes high during the break
-;    jmp x-- break_loop   [1]          ; Decrease the counter and go back to break loop if x>0 so that the break is not done
-;    wait 1 pin 0                      ; Stall until line goes high for the Mark-After-Break (MAB) 
-;
-
 
 .wrap_target
     wait 0 pin 11             ; cs2
     wait 1 pin 11                      ; Stall until start bit is asserted
 
 bitloop:
-    in pins, 10                        ; Shift data bit into ISR
-        
-    set x, 0
-    in x, 1
-    
-    set x, 1
-    in x, 1
-    in NULL, 20                       ; Push 24 more bits into the ISR so that our one byte is at the position where the DMA expects it
+    in pins, 10                        ; Shift data bit into ISR       
+
+    in NULL, 22                       ; Push 24 more bits into the ISR so that our one byte is at the position where the DMA expects it
     push                              ; Should probably do error checking on the stop bits some time in the future....
 
 .wrap

@@ -1,34 +1,34 @@
 #include <TFT_eSPI.h> // Hardware-specific library
 extern TFT_eSPI tft;
 
-void showcmd(uint8_t val) {
+void showcmd(uint8_t cs, uint8_t val) {
     char sbuf[40];
 	if ((val & 0xfe ) == 0xae) {
-		sprintf(sbuf, "cmd 0x%02x (on/off)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (on/off)", cs, val);
         Serial.println(sbuf);
     } else if ((val & 0xfe ) == 0xa0) {
-		sprintf(sbuf, "cmd 0x%02x (ADC select)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (ADC select)", cs, val);
         Serial.println(sbuf);
 	} else if ((val & 0xf0 ) == 0x40) {
-		sprintf(sbuf, "cmd 0x%02x (Initial display line)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (Initial display line)", cs, val);
         Serial.println(sbuf);
 	} else if ((val & 0xf0 ) == 0x20) {
-		sprintf(sbuf, "cmd 0x%02x (Regulator resistor select)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (Regulator resistor select)", cs, val);
         Serial.println(sbuf);
     } else if ((val & 0xf0 ) == 0xc0) {
-		sprintf(sbuf, "cmd 0x%02x (SHL select)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (SHL select)", cs, val);
         Serial.println(sbuf);
 	} else if (val == 0xe2) {
-		sprintf(sbuf, "cmd 0x%02x (reset)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (reset)", cs, val);
         Serial.println(sbuf);
 	} else if ((val & 0xf0 ) == 0x10 || (val & 0xf0 ) == 0x00) {
-		sprintf(sbuf, "cmd 0x%02x (set column address)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (set column address)", cs, val);
 //        Serial.println(sbuf);
     } else if ((val & 0xf0 ) == 0xb0) {
-		sprintf(sbuf, "cmd 0x%02x (Set page address)", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x (Set page address)", cs, val);
         Serial.println(sbuf);
     } else {
-		sprintf(sbuf, "cmd 0x%02x", val);
+		sprintf(sbuf, "cs: %d, cmd 0x%02x", cs, val);
         Serial.println(sbuf);
     }
 }

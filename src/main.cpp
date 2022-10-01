@@ -78,18 +78,14 @@ void setup()
 
 int cnt = 0;
 
-int start_index_cs1 = 0;
-int start_index_cs2 = 0;
-
+int start_index[2] = {0,0};
 uint8_t page[2] = {0,0};
 uint8_t xx[2] = {0,0};
 
 void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
 
     if (rs == 0) {
-        if (cs == 0) {
-          showcmd( val );
-        }
+        showcmd( cs, val );
         if ((val >> 4) == 0xb) {
           page[cs] = val & 0xf;
           xx[cs] = 0;
@@ -120,16 +116,16 @@ void loop()
 
     //delay(30);
 
-    if(millis() > 50 + dmxInput[0].latest_packet_timestamp()) {
+    if(millis() > 50 + dmxInput[0].latest_packet_timestamp() ) {
         //Serial.println("no data!");
         //return;
     } else {
       uint cur_index_cs1 = (uint) dmxInput[0].get_capture_index();  
-      if (start_index_cs1 > cur_index_cs1)
-        start_index_cs1 = 0;
+      if (start_index[0] > cur_index_cs1)
+        start_index[0] = 0;
 
 
-      for (uint i = start_index_cs1; i < cur_index_cs1; i++)  
+      for (uint i = start_index[0]; i < cur_index_cs1; i++)  
       {
           char sbuf[50];
 
@@ -144,7 +140,7 @@ void loop()
           //Serial.print(buffer_cs1[i]);
           //Serial.print(", ");
       }
-      start_index_cs1 = cur_index_cs1;
+      start_index[0] = cur_index_cs1;
     }
 
     if(millis() > 50 + dmxInput[1].latest_packet_timestamp()) {
@@ -152,46 +148,24 @@ void loop()
         //return;
     } else {
       uint cur_index_cs2 = (uint) dmxInput[1].get_capture_index();  
-      if (start_index_cs2 > cur_index_cs2)
-        start_index_cs2 = 0;
+      if (start_index[1] > cur_index_cs2)
+        start_index[1] = 0;
 
-      for (uint i = start_index_cs2; i < cur_index_cs2; i++)  
+      for (uint i = start_index[1]; i < cur_index_cs2; i++)  
       {
           char sbuf[50];
 
           uint8_t val = buffer_cs2[i] & 0xff;
           uint8_t rs = (buffer_cs2[i] >> 9) & 1 ;
   
-          uint8_t cs1 = 1; //(buffer_cs2[i] >> 10) & 1 ;
-          uint8_t cs2 = 1; //(buffer_cs2[i] >> 11) & 1 ;
-          
-          /*if ( ((val >> 4) == 0xb) && rs == 0) {
-          sprintf(sbuf,"%08x:%02x:%d:%d ", buffer_cs2[i], val, rs, cs1);
-          tft.print(sbuf);
-              if (tft.getCursorY() >320 ) {
-                  tft.fillScreen(TFT_ORANGE);
-                  tft.setCursor(0,0,2);
-              }
-          } */
-
           draw_juno_g(val, rs, 1);
 
-          //Serial.print(buffer_cs2[i]);
-          //Serial.print(", ");
       }
-      start_index_cs2 = cur_index_cs2;
+      start_index[1] = cur_index_cs2;
     }
 
     // Wait for next DMX packet
     //dmxInput[0].read(buffer);
-
-    // Print the DMX channels
-    //Serial.print("Received packet: ");
-    //for (uint i = 0; i < sizeof(buffer) /2 ; i++)  
-
-
-    //Serial.println("");
-
 
     // Blink the LED to indicate that a packet was received
     digitalWrite(LED_BUILTIN, HIGH);

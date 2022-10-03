@@ -28,16 +28,15 @@ uint tft_yoffset = 0;
 
 volatile uint16_t buffer_cs1[2][12*123*10];
 
+uint32_t tft_bgcolor = TFT_BLACK;
+uint32_t tft_bgcolor_prev = TFT_BLACK;
 
-uint32_t tft_bgcolor = TFT_ORANGE;
-uint32_t tft_bgcolor_prev = tft_bgcolor;
-
-void intelaced_FillScreen() {
+void intelaced_FillScreen(uint32_t bgcolor) {
   tft.fillScreen(TFT_BLACK);
   for (uint y = 0; y < tft.height(); y++) {
     for (uint x = 0; x < tft.width(); x++) {
       if (x % ZOOM_X  == 0 && y % ZOOM_Y == 0)
-        tft.drawPixel(x, y, tft_bgcolor);
+        tft.drawPixel(x, y, bgcolor);
     }
   }
 }
@@ -47,30 +46,31 @@ bool force_refresh = false;
 void tft_change_bgcolor() {
   uint32_t analog_read = analogRead(JUNO_BRGT);
   //Serial.println("ANALOG"+ String(analog_read));
-  if ( analog_read > 2600 && analog_read <= 2800) {
+  if ( analog_read <= 2850) {
     tft_bgcolor = TFT_ORANGE;
-  } else if ( analog_read > 2800 && analog_read <= 3000) {
-    tft_bgcolor = TFT_WHITE;
-  } else if ( analog_read > 3000 && analog_read <= 3100) {
-    tft_bgcolor = TFT_YELLOW;
-  } else if ( analog_read > 3000 && analog_read <= 3200) {
-    tft_bgcolor = TFT_GREENYELLOW;
-  } else if ( analog_read > 3200 && analog_read <= 3400) {
+  } else if ( analog_read > 2650 && analog_read <= 2850) {
     tft_bgcolor = TFT_SKYBLUE;
-  } else if ( analog_read > 3400 && analog_read <= 3600) {
+  } else if ( analog_read > 2850 && analog_read <= 3000) {
+    tft_bgcolor = TFT_GREENYELLOW;
+  } else if ( analog_read > 3000 && analog_read <= 3150) {
+    tft_bgcolor = TFT_YELLOW;
+  } else if ( analog_read > 3150 && analog_read <= 3300) {
+    tft_bgcolor = TFT_WHITE;
+  } else if ( analog_read > 3300) {
     tft_bgcolor = TFT_CYAN;
   } 
 
   if (tft_bgcolor != tft_bgcolor_prev) {
-    intelaced_FillScreen();
+    intelaced_FillScreen(tft_bgcolor);
     tft_bgcolor_prev = tft_bgcolor;
     force_refresh = true;
   }
-
 }
 
 void setup()
 {
+  analogReadResolution(12);
+  uint32_t analog_read = analogRead(JUNO_BRGT);
   //Serial.begin(115200);
   // delay(2000);
   //Serial.setTimeout(50);
@@ -80,9 +80,6 @@ void setup()
   tft.setRotation(1);
   tft_xoffset = (tft.width() - 240 * ZOOM_X) / 2 - ((tft.width() - 240 * ZOOM_X) / 2 % ZOOM_X);
   tft_yoffset = (tft.height() - 96 * ZOOM_Y) / 2 - ((tft.height() - 96 * ZOOM_Y) / 2 % ZOOM_Y);
-
-  analogReadResolution(12);
-  tft_change_bgcolor();
 
 #ifdef DRAW_SPLASH
   tft_change_bgcolor();

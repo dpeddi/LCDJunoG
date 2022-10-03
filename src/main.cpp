@@ -46,7 +46,7 @@ bool force_refresh = false;
 
 void tft_change_bgcolor() {
   uint32_t analog_read = analogRead(JUNO_BRGT);
-  Serial.println("ANALOG"+ String(analog_read));
+  //Serial.println("ANALOG"+ String(analog_read));
   if ( analog_read > 2600 && analog_read <= 2800) {
     tft_bgcolor = TFT_ORANGE;
   } else if ( analog_read > 2800 && analog_read <= 3000) {
@@ -171,7 +171,7 @@ void loop()
   } 
   if (force_refresh) {
     force_refresh = false;
-    Serial.println("Refresh forced!!");
+    //Serial.println("Refresh forced!!");
   }
   for (uint i = 0; i < 123*12; i++)  
   {

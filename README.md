@@ -46,3 +46,16 @@ https://github.com/jostlowe/Pico-DMX
 After some attempts i choosed with Pico-DMX, adapted to my needs to get the display working.
 
 
+BOM:
+====
+
+- Raspberry Pi Pico
+- Display ILI9488 5.0"
+- Some jumper wires
+- Some solder and some dil jumper and a solder board and thin cables.
+
+Pinout:
+=======
+
+Conntecting the RPI pico to the display and the keyboard is quite easy.
+You just need to find out the keyboard display pinout by reading the service manual and invent something to connect the rpi to the keyboard.

@@ -80,6 +80,10 @@ void setup()
   tft.setRotation(1);
   tft_xoffset = (tft.width() - 240 * ZOOM_X) / 2 - ((tft.width() - 240 * ZOOM_X) / 2 % ZOOM_X);
   tft_yoffset = (tft.height() - 96 * ZOOM_Y) / 2 - ((tft.height() - 96 * ZOOM_Y) / 2 % ZOOM_Y);
+
+  analogReadResolution(12);
+  tft_change_bgcolor();
+
 #ifdef DRAW_SPLASH
   tft_change_bgcolor();
   drawBitmapZoom(0, 0, (const uint8_t *)junog, 240, 90, TFT_BLACK);
@@ -116,11 +120,6 @@ void setup()
 
   // Setup the onboard LED so that we can blink when we receives packets
   pinMode(LED_BUILTIN, OUTPUT);
-
-
-  analogReadResolution(12);
-
-  tft_change_bgcolor();
 }
 
 volatile int start_index[2] = {0,0};

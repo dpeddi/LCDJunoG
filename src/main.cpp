@@ -28,14 +28,45 @@ uint tft_yoffset = 0;
 
 volatile uint16_t buffer_cs1[2][12*123*10];
 
+
+uint32_t tft_bgcolor = TFT_ORANGE;
+uint32_t tft_bgcolor_prev = tft_bgcolor;
+
 void intelaced_FillScreen() {
   tft.fillScreen(TFT_BLACK);
   for (uint y = 0; y < tft.height(); y++) {
     for (uint x = 0; x < tft.width(); x++) {
       if (x % ZOOM_X  == 0 && y % ZOOM_Y == 0)
-        tft.drawPixel(x, y, TFT_ORANGE);
+        tft.drawPixel(x, y, tft_bgcolor);
     }
   }
+}
+
+bool force_refresh = false;
+
+void tft_change_bgcolor() {
+  uint32_t analog_read = analogRead(JUNO_BRGT);
+  Serial.println("ANALOG"+ String(analog_read));
+  if ( analog_read > 2600 && analog_read <= 2800) {
+    tft_bgcolor = TFT_ORANGE;
+  } else if ( analog_read > 2800 && analog_read <= 3000) {
+    tft_bgcolor = TFT_WHITE;
+  } else if ( analog_read > 3000 && analog_read <= 3100) {
+    tft_bgcolor = TFT_YELLOW;
+  } else if ( analog_read > 3000 && analog_read <= 3200) {
+    tft_bgcolor = TFT_GREENYELLOW;
+  } else if ( analog_read > 3200 && analog_read <= 3400) {
+    tft_bgcolor = TFT_SKYBLUE;
+  } else if ( analog_read > 3400 && analog_read <= 3600) {
+    tft_bgcolor = TFT_CYAN;
+  } 
+
+  if (tft_bgcolor != tft_bgcolor_prev) {
+    intelaced_FillScreen();
+    tft_bgcolor_prev = tft_bgcolor;
+    force_refresh = true;
+  }
+
 }
 
 void setup()
@@ -50,7 +81,7 @@ void setup()
   tft_xoffset = (tft.width() - 240 * ZOOM_X) / 2 - ((tft.width() - 240 * ZOOM_X) / 2 % ZOOM_X);
   tft_yoffset = (tft.height() - 96 * ZOOM_Y) / 2 - ((tft.height() - 96 * ZOOM_Y) / 2 % ZOOM_Y);
 #ifdef DRAW_SPLASH
-  tft.fillScreen(TFT_ORANGE);
+  tft_change_bgcolor();
   drawBitmapZoom(0, 0, (const uint8_t *)junog, 240, 90, TFT_BLACK);
   delay(500);
 #endif
@@ -59,7 +90,7 @@ void setup()
 
 #define DRAW_INFO
 #ifdef DRAW_INFO
-  intelaced_FillScreen();
+  tft_change_bgcolor();
   tft.setTextColor(TFT_BLACK);
   tft.setCursor(0, tft.height()/2 -10  , 2);
   tft.setTextSize(2);
@@ -85,6 +116,11 @@ void setup()
 
   // Setup the onboard LED so that we can blink when we receives packets
   pinMode(LED_BUILTIN, OUTPUT);
+
+
+  analogReadResolution(12);
+
+  tft_change_bgcolor();
 }
 
 volatile int start_index[2] = {0,0};
@@ -106,7 +142,7 @@ void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
         if (((val >> i) & 0x1) == 1) {
           tft.drawPixel(tft_xoffset + 120 * cs * ZOOM_X + xx[cs] * ZOOM_X, tft_yoffset + (page[cs] * 8 + i ) * ZOOM_Y, TFT_BLACK);
         } else {
-          tft.drawPixel(tft_xoffset + 120 * cs * ZOOM_X + xx[cs] * ZOOM_X, tft_yoffset + (page[cs] * 8 + i ) * ZOOM_Y, TFT_ORANGE);
+          tft.drawPixel(tft_xoffset + 120 * cs * ZOOM_X + xx[cs] * ZOOM_X, tft_yoffset + (page[cs] * 8 + i ) * ZOOM_Y, tft_bgcolor);
         }
       }
       xx[cs]++;
@@ -114,12 +150,29 @@ void draw_juno_g(uint8_t val, uint8_t rs, uint8_t cs) {
   }
 }
 
+int period = 500;
+unsigned long time_now = 0;
+unsigned long my_millis = 0;
+
+
+
 void loop()
-{
-  if(millis() > 50 + lcdJunoG[0].latest_packet_timestamp() && millis() > 50 + lcdJunoG[1].latest_packet_timestamp() ) {
+{  
+  my_millis = millis();
+
+  if(my_millis >= time_now + period){
+        time_now += period;
+        tft_change_bgcolor();
+  }
+
+  if(! force_refresh  && my_millis > 50 + lcdJunoG[0].latest_packet_timestamp() && my_millis > 50 + lcdJunoG[1].latest_packet_timestamp()) {
     //Serial.println("no data!");
     return;
   } 
+  if (force_refresh) {
+    force_refresh = false;
+    Serial.println("Refresh forced!!");
+  }
   for (uint i = 0; i < 123*12; i++)  
   {
     for (uint8_t j = 0; j <2; j++) {

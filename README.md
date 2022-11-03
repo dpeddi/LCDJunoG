@@ -57,5 +57,28 @@ BOM:
 Pinout:
 =======
 
+![alt text](https://github.com/dpeddi/LCDJunoG/blob/main/image.png?raw=true)
+
 Conntecting the RPI pico to the display and the keyboard is quite easy.
 You just need to find out the keyboard display pinout by reading the service manual and invent something to connect the rpi to the keyboard.
+
+|JunoG Pin|JunoG Function|RpiPico Pin|
+|---|---|---|
+|18|+5V|VSYS|
+|17|GND|GND|
+|16|+3V||
+|15|RST|GP14|
+|14|CS1|GP12|
+|13|CS2|GP13|
+|12|RS|GP11|
+|11|WE|GP10|
+|10|D0|GP2|
+|9|D1|GP3|
+|8|D2|GP4|
+|7|D3|GP5|
+|6|D4|GP6|
+|5|D5|GP7|
+|4|D6|GP8|
+|3|D7|GP9|
+|2|BRGT|GP26|
+|1|BRGT Vref|+3V|

@@ -50,7 +50,7 @@ BOM:
 ====
 
 - Raspberry Pi Pico
-- Display ILI9488 5.0"
+- Display ILI9488 4.0"
 - Some jumper wires
 - Some solder and some dil jumper and a solder board and thin cables.
 

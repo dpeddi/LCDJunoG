@@ -2,6 +2,8 @@
 Roland Juno G LCD Emulator
 ==========================
 
+If this is too complex for you you can buy a ready made replacement on https://junoglcd.my-online.store/.
+
 The keyboard Roland Juno G is equipped with an "International Display Works" V0054850 Rev A LCD with PN: 5485SGPABNC
 
 It seems that this part is defective and Roland replaced it with a new revision that was quite expansive

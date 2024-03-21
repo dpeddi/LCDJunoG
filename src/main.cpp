@@ -47,15 +47,55 @@ void drawPixels(uint8_t val, uint8_t xx, uint8_t yy) {
   int8_t y = xx * 8;
   //for (int b = 0; b < 8; b++ ) {
     //if (((val >> b) & 0x1) == 1) tft.drawPixel(x, pixel_y[y+b], TFT_BLACK); else tft.drawPixel(x, pixel_y[y+b], TFT_WHITE);
-    //unrolled:
-    if ((val & 0x1) == 0x1)   tft.drawPixel(x, pixel_y[y++], TFT_BLACK); else tft.drawPixel(x, pixel_y[y++], tft_bgcolor);
-    if ((val & 0x2) == 0x2)   tft.drawPixel(x, pixel_y[y++], TFT_BLACK); else tft.drawPixel(x, pixel_y[y++], tft_bgcolor);
-    if ((val & 0x4) == 0x4)   tft.drawPixel(x, pixel_y[y++], TFT_BLACK); else tft.drawPixel(x, pixel_y[y++], tft_bgcolor);
-    if ((val & 0x8) == 0x8)   tft.drawPixel(x, pixel_y[y++], TFT_BLACK); else tft.drawPixel(x, pixel_y[y++], tft_bgcolor);
-    if ((val & 0x10) == 0x10) tft.drawPixel(x, pixel_y[y++], TFT_BLACK); else tft.drawPixel(x, pixel_y[y++], tft_bgcolor);
-    if ((val & 0x20) == 0x20) tft.drawPixel(x, pixel_y[y++], TFT_BLACK); else tft.drawPixel(x, pixel_y[y++], tft_bgcolor);
-    if ((val & 0x40) == 0x40) tft.drawPixel(x, pixel_y[y++], TFT_BLACK); else tft.drawPixel(x, pixel_y[y++], tft_bgcolor);
-    if ((val & 0x80) == 0x80) tft.drawPixel(x, pixel_y[y  ], TFT_BLACK); else tft.drawPixel(x, pixel_y[y  ], tft_bgcolor);
+    //unrolled(replace drawPixel with drawRect to improve the figrue):
+    if ((val & 0x1) == 0x1) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else { 
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
+    if ((val & 0x2) == 0x2) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
+    if ((val & 0x4) == 0x4) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
+    if ((val & 0x8) == 0x8) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
+    if ((val & 0x10) == 0x10) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
+    if ((val & 0x20) == 0x20) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
+    if ((val & 0x40) == 0x40) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
+    if ((val & 0x80) == 0x80) {
+      uint16_t y_h = pixel_y[y++];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,TFT_BLACK);
+    } else {
+      uint16_t y_h = pixel_y[y];  tft.drawRect(x,y_h,ZOOM_X,ZOOM_Y,tft_bgcolor);
+    }
+
   //}
 }
 
@@ -225,6 +265,7 @@ void loop()
   if(latest_packet_timestamp_cs1 == lcdJunoG_cs1.latest_packet_timestamp() && latest_packet_timestamp_cs2 == lcdJunoG_cs2.latest_packet_timestamp()) {
     return; // no packet received
   } 
+
   latest_packet_timestamp_cs1 = lcdJunoG_cs1.latest_packet_timestamp();
   latest_packet_timestamp_cs2 = lcdJunoG_cs2.latest_packet_timestamp();
   tft.startWrite();
@@ -290,6 +331,9 @@ void loop()
     }
   }
   tft.endWrite();
+  
+
+
   // Blink the LED to indicate that a packet was received
   if (!led_on) digitalWrite(LED_BUILTIN, HIGH); else digitalWrite(LED_BUILTIN, LOW);
   led_on != led_on;
